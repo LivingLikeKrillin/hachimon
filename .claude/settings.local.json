@@ -11,7 +11,20 @@
       "Bash(rm -rf tmp-scaffold)",
       "Bash(npm install:*)",
       "Bash(npx --yes shadcn@latest init -d)",
-      "Bash(npx shadcn@latest init -d)"
+      "Bash(npx shadcn@latest init -d)",
+      "Bash(mkdir:*)",
+      "Bash(rm:*)",
+      "Bash(npx shadcn@latest add card separator badge -y)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)",
+      "Bash(cp \"C:\\\\Users\\\\Eisen\\\\Desktop\\\\Labs\\\\[projects] trial\\\\hachimon\\\\logo.png\" \"C:\\\\Users\\\\Eisen\\\\Desktop\\\\Labs\\\\[projects] trial\\\\hachimon\\\\public\\\\logo.png\")",
+      "Bash(rm \"C:\\\\Users\\\\Eisen\\\\Desktop\\\\Labs\\\\[projects] trial\\\\hachimon\\\\public\\\\favicon.svg\")",
+      "Bash(npx --yes sharp-cli -i logo.png -o /dev/null --info)",
+      "Bash(node -e \"const sharp = require\\('sharp'\\); sharp\\('logo.png'\\).metadata\\(\\).then\\(m => console.log\\(JSON.stringify\\(m, null, 2\\)\\)\\)\")",
+      "Bash(python:*)",
+      "Bash(find /c/Users/Eisen/Desktop/Labs/*/hachimon -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" -o -name \"*.css\" \\\\\\))",
+      "WebSearch",
+      "WebFetch(domain:dev.to)"
     ]
   }
 }

@@ -1,15 +1,16 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: 'Geist Variable', sans-serif;
-  --font-mono: ui-monospace, "Consolas", monospace;
+  --font-sans: "IBM Plex Sans KR", "IBM Plex Sans", sans-serif;
+  --font-display: "Chakra Petch", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Consolas", monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -43,45 +44,49 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-heading: var(--font-sans);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Hachimon — always dark theme (zinc palette + gate colors) */
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #18181b;
+  --card-foreground: #fafafa;
+  --popover: #18181b;
+  --popover-foreground: #fafafa;
+  --primary: #2563eb;
+  --primary-foreground: #fafafa;
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --destructive: #ef4444;
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #2563eb;
+  --chart-1: #60a5fa;
+  --chart-2: #fbbf24;
+  --chart-3: #f87171;
+  --chart-4: #34d399;
+  --chart-5: #a78bfa;
+
+  /* Eight Gate colors */
+  --gate-1: #60a5fa; /* Opening - blue */
+  --gate-2: #38bdf8; /* Healing - cyan */
+  --gate-3: #34d399; /* Life - green */
+  --gate-4: #a3e635; /* Pain - lime */
+  --gate-5: #fbbf24; /* Limit - amber */
+  --gate-6: #fb923c; /* View - orange */
+  --gate-7: #f87171; /* Wonder - red */
+  --gate-8: #e11d48; /* Death - crimson */
+}
+
+html {
+  overflow-x: hidden;
+  overscroll-behavior: none;
 }
 
 body {
@@ -92,9 +97,76 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-/* Hachimon animations */
+/* Safe area utilities */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* === Background atmosphere === */
+.bg-gate-aura {
+  position: relative;
+}
+.bg-gate-aura::before {
+  content: '';
+  position: fixed;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(96, 165, 250, 0.06) 0%,
+    rgba(248, 113, 113, 0.04) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* === Gate glow effects === */
+.glow-blue { box-shadow: 0 0 20px rgba(96, 165, 250, 0.15), inset 0 1px 0 rgba(96, 165, 250, 0.1); }
+.glow-amber { box-shadow: 0 0 20px rgba(251, 191, 36, 0.15), inset 0 1px 0 rgba(251, 191, 36, 0.1); }
+.glow-red { box-shadow: 0 0 20px rgba(248, 113, 113, 0.15), inset 0 1px 0 rgba(248, 113, 113, 0.1); }
+
+/* === Gate gradient border === */
+.border-gate-gradient {
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+}
+.border-gate-gradient::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--gate-1), var(--gate-5), var(--gate-7));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* === Hachimon animations === */
 @keyframes fg-slide {
   from { transform: translateX(20px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
@@ -120,6 +192,20 @@ body {
   50% { transform: scale(0.96); }
   100% { transform: scale(1); }
 }
+@keyframes gate-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Animation utility classes */
+.animate-up { animation: fg-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-scale { animation: fg-scale 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-slide { animation: fg-slide 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.stagger-1 { animation-delay: 60ms; }
+.stagger-2 { animation-delay: 120ms; }
+.stagger-3 { animation-delay: 180ms; }
+.stagger-4 { animation-delay: 240ms; }
+.stagger-5 { animation-delay: 300ms; }
 
 /* Custom range slider */
 input[type="range"] {
@@ -140,48 +226,7 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: pointer;
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
-  }
+/* Display font utility */
+.font-display {
+  font-family: "Chakra Petch", sans-serif;
 }
