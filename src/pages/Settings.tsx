@@ -1,8 +1,8 @@
-import { useState } from 'react';
 import { RotateCcw, Download, Info } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import PageLayout from '@/components/layout/PageLayout';
 import SectionLabel from '@/components/shared/SectionLabel';
+import { useSettings } from '@/hooks/useSettings';
 
 interface SliderSettingProps {
   label: string;
@@ -48,11 +48,9 @@ function SliderSetting({ label, value, min, max, unit, color = '#60a5fa', onChan
 }
 
 export default function Settings() {
-  const [dailyNew, setDailyNew] = useState(10);
-  const [dailyReview, setDailyReview] = useState(50);
-  const [sessionSize, setSessionSize] = useState(15);
-  const [initialEF, setInitialEF] = useState(2.5);
-  const [minEF, setMinEF] = useState(1.3);
+  const { settings, loading, update } = useSettings();
+
+  if (loading) return <PageLayout><div /></PageLayout>;
 
   return (
     <PageLayout>
@@ -61,11 +59,11 @@ export default function Settings() {
         <SectionLabel>세션 설정</SectionLabel>
         <Card>
           <CardContent className="p-5 space-y-6">
-            <SliderSetting label="일일 신규 카드" value={dailyNew} min={0} max={30} unit="장" color="#60a5fa" onChange={setDailyNew} />
+            <SliderSetting label="일일 신규 카드" value={settings.dailyNew} min={0} max={30} unit="장" color="#60a5fa" onChange={(v) => update({ dailyNew: v })} />
             <div className="border-t border-zinc-800/50" />
-            <SliderSetting label="일일 복습 상한" value={dailyReview} min={10} max={200} unit="장" color="#34d399" onChange={setDailyReview} />
+            <SliderSetting label="일일 복습 상한" value={settings.dailyReview} min={10} max={200} unit="장" color="#34d399" onChange={(v) => update({ dailyReview: v })} />
             <div className="border-t border-zinc-800/50" />
-            <SliderSetting label="세션당 카드 수" value={sessionSize} min={5} max={30} unit="장" color="#fbbf24" onChange={setSessionSize} />
+            <SliderSetting label="세션당 카드 수" value={settings.sessionSize} min={5} max={30} unit="장" color="#fbbf24" onChange={(v) => update({ sessionSize: v })} />
           </CardContent>
         </Card>
       </div>
@@ -77,22 +75,22 @@ export default function Settings() {
           <CardContent className="p-5 space-y-6">
             <SliderSetting
               label="초기 Ease Factor"
-              value={initialEF}
+              value={settings.initialEF}
               min={1.3}
               max={3.0}
               unit=""
               color="#a78bfa"
-              onChange={setInitialEF}
+              onChange={(v) => update({ initialEF: v })}
             />
             <div className="border-t border-zinc-800/50" />
             <SliderSetting
               label="최소 Ease Factor"
-              value={minEF}
+              value={settings.minEF}
               min={1.0}
               max={2.0}
               unit=""
               color="#fb923c"
-              onChange={setMinEF}
+              onChange={(v) => update({ minEF: v })}
             />
           </CardContent>
         </Card>
@@ -109,19 +107,14 @@ export default function Settings() {
         <SectionLabel>프리셋</SectionLabel>
         <div className="grid grid-cols-2 gap-2.5">
           {[
-            { name: '기본', desc: '균형 잡힌 설정', values: '10/50/15', icon: '⚖️' },
-            { name: '집중', desc: '많은 복습량', values: '5/100/20', icon: '🔥' },
-            { name: '가벼운', desc: '적은 복습량', values: '5/30/10', icon: '🍃' },
-            { name: '시험 대비', desc: '최대 복습', values: '0/200/30', icon: '⚡' },
+            { name: '기본', desc: '균형 잡힌 설정', values: { dailyNew: 10, dailyReview: 50, sessionSize: 15 }, icon: '⚖️' },
+            { name: '집중', desc: '많은 복습량', values: { dailyNew: 5, dailyReview: 100, sessionSize: 20 }, icon: '🔥' },
+            { name: '가벼운', desc: '적은 복습량', values: { dailyNew: 5, dailyReview: 30, sessionSize: 10 }, icon: '🍃' },
+            { name: '시험 대비', desc: '최대 복습', values: { dailyNew: 0, dailyReview: 200, sessionSize: 30 }, icon: '⚡' },
           ].map((preset) => (
             <button
               key={preset.name}
-              onClick={() => {
-                const [n, r, s] = preset.values.split('/').map(Number);
-                setDailyNew(n);
-                setDailyReview(r);
-                setSessionSize(s);
-              }}
+              onClick={() => update(preset.values)}
               className="p-4 rounded-xl bg-zinc-900 border border-zinc-800 text-left transition-all hover:border-zinc-600 active:scale-[0.97]"
             >
               <div className="flex items-center gap-2 mb-1">
