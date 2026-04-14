@@ -254,6 +254,82 @@ input[type="range"]::-webkit-slider-thumb {
   box-shadow: 0 1px 3px rgba(0,0,0,0.4);
 }
 
+/* === Code syntax highlighting (One Dark Pro) === */
+.prose-hachimon pre code.hljs { background: none; padding: 0; }
+.hljs { color: #e6edf3; }
+.hljs-keyword,
+.hljs-built_in { color: #ff7b72; }
+.hljs-type,
+.hljs-class .hljs-title,
+.hljs-title.class_ { color: #79c0ff; }
+.hljs-string { color: #a5d6ff; }
+.hljs-attr,
+.hljs-meta { color: #d2a8ff; }
+.hljs-comment { color: #6e7681; font-style: italic; }
+.hljs-number,
+.hljs-literal { color: #79c0ff; }
+.hljs-variable,
+.hljs-property { color: #7ee787; }
+.hljs-punctuation { color: #b1bac4; }
+.hljs-params { color: #e6edf3; }
+
+/* Markdown prose for card answers */
+.prose-hachimon p { margin: 0.5em 0; }
+.prose-hachimon p:first-child { margin-top: 0; }
+.prose-hachimon strong { color: #fafafa; font-weight: 600; }
+.prose-hachimon code {
+  background: #27272a;
+  color: #60a5fa;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: var(--font-mono);
+}
+.prose-hachimon pre {
+  background: #0d1117;
+  border: 1px solid #27272a;
+  border-radius: 10px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  margin: 10px 0;
+  position: relative;
+}
+.prose-hachimon pre code {
+  background: none;
+  padding: 0;
+  color: #e6edf3;
+  font-size: 12px;
+  line-height: 1.7;
+  counter-reset: line;
+}
+.prose-hachimon pre code .hljs-ln-line {
+  counter-increment: line;
+}
+/* Language label */
+.prose-hachimon pre[class*="language-"]::before,
+.prose-hachimon pre:has(code[class*="language-"])::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 10px;
+  color: #484f58;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.prose-hachimon ul, .prose-hachimon ol {
+  padding-left: 1.2em;
+  margin: 0.5em 0;
+}
+.prose-hachimon li { margin: 0.25em 0; }
+.prose-hachimon li::marker { color: #52525b; }
+.prose-hachimon hr {
+  border: none;
+  border-top: 1px solid #27272a;
+  margin: 0.75em 0;
+}
+
 /* Display font utility */
 .font-display {
   font-family: "DM Sans", sans-serif;

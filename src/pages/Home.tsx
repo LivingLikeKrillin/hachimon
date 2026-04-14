@@ -1,20 +1,35 @@
 import { Flame, Sparkles, AlertTriangle, ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import type { Screen } from '@/types';
 import PageLayout from '@/components/layout/PageLayout';
 import SectionLabel from '@/components/shared/SectionLabel';
 import StatRow from '@/components/shared/StatRow';
 import ProgressBar from '@/components/shared/ProgressBar';
+import { useHomeStats } from '@/hooks/useDueCards';
+import { useSettings } from '@/hooks/useSettings';
 
-export default function Home() {
+const GATE_COLORS = ['var(--gate-1)', 'var(--gate-5)', 'var(--gate-7)', 'var(--gate-3)', 'var(--gate-6)'];
+
+interface HomeProps {
+  onNavigate: (screen: Screen) => void;
+  onStartDeckReview?: (deckId: string) => void;
+}
+
+export default function Home({ onNavigate, onStartDeckReview }: HomeProps) {
+  const { stats, loading } = useHomeStats();
+  const { settings } = useSettings();
+
+  if (loading) return <PageLayout><div /></PageLayout>;
+
   return (
     <PageLayout>
       {/* Stats summary */}
       <div className="animate-up stagger-1">
         <StatRow
           items={[
-            { value: 23, label: '오늘 복습', color: 'text-blue-400' },
-            { value: 47, label: '연속 일수', color: 'text-amber-400' },
-            { value: '1,235', label: '전체 카드' },
+            { value: stats.dueCount, label: '오늘 복습', color: 'text-blue-400' },
+            { value: stats.streak, label: '연속 일수', color: 'text-amber-400' },
+            { value: stats.totalCards.toLocaleString(), label: '전체 카드' },
           ]}
         />
       </div>
@@ -25,63 +40,67 @@ export default function Home() {
           <div className="flex justify-between items-center">
             <p className="text-[14px] text-zinc-300">오늘의 목표</p>
             <p className="font-display text-[16px] font-bold tabular-nums">
-              <span className="text-blue-400">0</span>
+              <span className="text-blue-400">{stats.todayReviewed}</span>
               <span className="text-zinc-500 mx-1">/</span>
-              <span>15</span>
+              <span>{settings.sessionSize}</span>
             </p>
           </div>
-          <ProgressBar value={0} max={15} color="#60a5fa" h="h-2" />
+          <ProgressBar value={stats.todayReviewed} max={settings.sessionSize} color="#60a5fa" h="h-2" />
         </CardContent>
       </Card>
 
       {/* Action buttons */}
       <div className="space-y-2.5 animate-up stagger-3">
-        <button className="w-full h-[52px] rounded-xl text-[15px] font-semibold flex items-center justify-center gap-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white transition-all duration-150 active:scale-[0.96] active:from-blue-700 active:to-blue-600 active:shadow-none"
+        <button
+          onClick={() => onNavigate('review')}
+          className="w-full h-[52px] rounded-xl text-[15px] font-semibold flex items-center justify-center gap-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white transition-all duration-150 active:scale-[0.96] active:from-blue-700 active:to-blue-600 active:shadow-none"
           style={{ boxShadow: '0 2px 12px rgba(37, 99, 235, 0.15)' }}
         >
           <Sparkles size={18} />
           오늘의 복습 시작
         </button>
-        <button className="w-full h-[52px] rounded-xl text-[15px] font-semibold flex items-center justify-center gap-2.5 bg-zinc-900 border border-zinc-800 text-zinc-200 transition-all duration-150 active:scale-[0.96] active:bg-zinc-800">
+        <button
+          onClick={() => onNavigate('interview')}
+          className="w-full h-[52px] rounded-xl text-[15px] font-semibold flex items-center justify-center gap-2.5 bg-zinc-900 border border-zinc-800 text-zinc-200 transition-all duration-150 active:scale-[0.96] active:bg-zinc-800"
+        >
           <Flame size={18} className="text-amber-500" />
           면접 훈련 모드
         </button>
       </div>
 
       {/* Due decks */}
-      <div className="animate-up stagger-4">
-        <SectionLabel>복습 대기 Top 3</SectionLabel>
-        <Card>
-          <CardContent className="p-0">
-            {[
-              { name: 'Spring Core', count: 8, gate: 'var(--gate-1)' },
-              { name: 'JPA Core', count: 5, gate: 'var(--gate-5)' },
-              { name: 'Java Concurrency', count: 4, gate: 'var(--gate-7)' },
-            ].map((deck, i) => (
-              <div
-                key={deck.name}
-                className={`flex justify-between items-center px-4 py-3.5 group cursor-pointer transition-colors hover:bg-zinc-800/30 ${
-                  i < 2 ? 'border-b border-zinc-800/50' : ''
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className="w-1 h-6 rounded-full"
-                    style={{ background: deck.gate }}
-                  />
-                  <span className="text-[14px] text-zinc-200">{deck.name}</span>
+      {stats.dueByDeck.length > 0 && (
+        <div className="animate-up stagger-4">
+          <SectionLabel>복습 대기 Top 3</SectionLabel>
+          <Card>
+            <CardContent className="p-0">
+              {stats.dueByDeck.map((deck, i) => (
+                <div
+                  key={deck.deckId}
+                  onClick={() => onStartDeckReview?.(deck.deckId)}
+                  className={`flex justify-between items-center px-4 py-3.5 group cursor-pointer transition-colors hover:bg-zinc-800/30 active:bg-zinc-800/50 ${
+                    i < stats.dueByDeck.length - 1 ? 'border-b border-zinc-800/50' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="w-1 h-6 rounded-full"
+                      style={{ background: GATE_COLORS[i % GATE_COLORS.length] }}
+                    />
+                    <span className="text-[14px] text-zinc-200">{deck.name}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-display text-[14px] font-semibold tabular-nums" style={{ color: GATE_COLORS[i % GATE_COLORS.length] }}>
+                      {deck.count}
+                    </span>
+                    <ChevronRight size={14} className="text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-display text-[14px] font-semibold tabular-nums" style={{ color: deck.gate }}>
-                    {deck.count}
-                  </span>
-                  <ChevronRight size={14} className="text-zinc-600 group-hover:text-zinc-400 transition-colors" />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Leech warning */}
       <div className="animate-up stagger-5">
@@ -93,9 +112,9 @@ export default function Home() {
             </div>
             <div className="space-y-1">
               <p className="text-[14px] text-zinc-200">
-                3회 이상 틀린 카드가 <span className="text-amber-400 font-semibold">7장</span> 있습니다
+                거머리 카드 탐지는 복습 데이터 축적 후 활성화됩니다
               </p>
-              <p className="text-[12px] text-zinc-400">집중 복습이 필요합니다</p>
+              <p className="text-[12px] text-zinc-400">복습을 시작하세요</p>
             </div>
           </CardContent>
         </Card>
