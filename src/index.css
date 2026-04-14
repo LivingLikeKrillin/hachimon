@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
@@ -175,10 +174,7 @@ body {
   from { transform: translateX(20px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
-@keyframes fg-flip {
-  from { transform: rotateX(-90deg); opacity: 0; }
-  to { transform: rotateX(0); opacity: 1; }
-}
+
 @keyframes fg-up {
   from { transform: translateY(12px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
@@ -190,15 +186,6 @@ body {
 @keyframes fg-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
-}
-@keyframes fg-press {
-  0% { transform: scale(1); }
-  50% { transform: scale(0.96); }
-  100% { transform: scale(1); }
-}
-@keyframes gate-shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
 }
 
 /* Tab transition */

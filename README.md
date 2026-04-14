@@ -1,22 +1,27 @@
 <p align="center">
-  <img src="logo.png" alt="Hachimon" width="200" />
-</p>
-
-<h1 align="center">Hachimon (八門)</h1>
-
-<p align="center">
-  기억의 문을 하나씩 여는 간격 반복 시스템
+  <img src="logo.png" alt="Hachimon" width="180" />
 </p>
 
 <p align="center">
-  Obsidian Vault의 플래시카드를 모바일에서 SM-2로 복습하는 서버리스 PWA
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=white" />
+  <img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" />
+  <img src="https://img.shields.io/badge/Cloudflare_Pages-PWA-F38020?style=for-the-badge&logo=cloudflarepages&logoColor=white" />
+</p>
+
+<h1 align="center">Hachimon</h1>
+
+<p align="center">
+  <strong>八門遁甲 — 기억의 문을 하나씩 여는 간격 반복 시스템</strong><br/>
+  Obsidian Vault의 플래시카드를 SM-2 알고리즘으로 복습하는 서버리스 모바일 PWA
 </p>
 
 ---
 
-## 개요
+## What is Hachimon?
 
-Hachimon은 서버 없이 동작하는 정적 PWA입니다. Obsidian 노트를 Kotlin CLI로 파싱하여 `cards.json`을 생성하고, Cloudflare Pages에 배포합니다. 브라우저의 IndexedDB에서 SM-2 스케줄링을 수행하므로 인증, DB, API 서버가 필요 없습니다.
+Hachimon은 백엔드 없이 돌아가는 정적 PWA입니다. Obsidian 노트를 Kotlin CLI로 파싱해서 `cards.json`을 만들고, Cloudflare Pages에 올립니다. 복습 스케줄링은 브라우저 IndexedDB에서 처리하기 때문에 별도 서버가 필요 없습니다.
 
 ```
 Obsidian Vault (.md)
@@ -25,24 +30,61 @@ Obsidian Vault (.md)
   → React PWA → fetch → IndexedDB (로컬)
 ```
 
-## 기술 스택
+### Why Hachimon?
 
-| 레이어 | 선택 |
-|--------|------|
-| CLI 파서 | Kotlin + GraalVM native image |
-| 프레임워크 | React 18 + TypeScript (strict) |
-| 스타일링 | Tailwind CSS 3 + shadcn/ui |
-| 빌드 | Vite |
-| 마크다운 렌더링 | react-markdown + rehype-highlight |
-| 로컬 저장소 | IndexedDB (idb) |
-| 코드 하이라이팅 | 커스텀 One Dark Pro (Java/Kotlin, SQL, YAML) |
-| 호스팅 | Cloudflare Pages |
-| 오프라인 | vite-plugin-pwa (Workbox) |
-| 아이콘 | lucide-react |
+| 기존 SRS | Hachimon |
+|:--------:|:--------:|
+| 서버 필요 | 완전 서버리스 (정적 호스팅) |
+| 앱 설치 필요 | PWA — 브라우저에서 바로 사용 |
+| 범용 카드 | 개발자 면접 특화 (코드 하이라이팅) |
+| 단일 난이도 | 3-Tier (Foundation → Mechanism → Diagnosis) |
+| 수동 카드 생성 | Obsidian Vault에서 자동 파싱 |
+| 단일 복습 모드 | 오늘의 복습 + 면접 훈련 + 새 카드 학습 |
 
-## 핵심 기능
+---
 
-### 복습 모드 3가지
+## Architecture
+
+```
+┌──────────────────────────┐
+│    Obsidian Vault        │
+│    (Markdown files)      │
+└────────────┬─────────────┘
+             │
+    ┌────────▼────────┐
+    │  Kotlin CLI     │
+    │  (GraalVM)      │
+    │  파싱 + 분류     │
+    └────────┬────────┘
+             │
+    ┌────────▼────────┐
+    │  cards.json     │
+    │  (정적 데이터)    │
+    └────────┬────────┘
+             │ git push
+    ┌────────▼────────┐
+    │ Cloudflare Pages│
+    │  (정적 호스팅)    │
+    └────────┬────────┘
+             │ fetch
+    ┌────────▼────────────────────────┐
+    │        React PWA               │
+    │  ┌───────────┐  ┌───────────┐  │
+    │  │  SM-2     │  │ IndexedDB │  │
+    │  │ Algorithm │  │  (로컬)    │  │
+    │  └───────────┘  └───────────┘  │
+    │  ┌───────────────────────────┐ │
+    │  │  4탭 + 3 플로우 화면       │ │
+    │  │  홈 | 덱 | 통계 | 설정    │ │
+    │  └───────────────────────────┘ │
+    └────────────────────────────────┘
+```
+
+---
+
+## Key Features
+
+### 3가지 복습 모드
 
 - **오늘의 복습** — SM-2 due 카드 15장 자동 선택. overdue 우선, 원탭 시작.
 - **면접 훈련** — 덱 트리 + 티어 필터 + 세션 크기 조절. 맞춤형 복습.
@@ -50,52 +92,244 @@ Obsidian Vault (.md)
 
 ### 3-Tier 난이도 체계
 
-| Tier | 색상 | 의미 |
-|------|------|------|
-| Foundation | 🔵 Blue | 개념 확인 — 정의, 용어 |
-| Mechanism | 🟡 Amber | 동작 원리 — 내부 구현, 비교 |
-| Diagnosis | 🔴 Red | 실전 진단 — 트러블슈팅, 설계 판단 |
+| Tier | 색상 | 의미 | 예시 |
+|------|------|------|------|
+| Foundation | Blue (#60a5fa) | 개념 확인 — 정의, 용어 | "트랜잭션 격리 수준의 종류는?" |
+| Mechanism | Amber (#fbbf24) | 동작 원리 — 내부 구현, 비교 | "REQUIRES_NEW와 NESTED의 차이점은?" |
+| Diagnosis | Red (#f87171) | 실전 진단 — 트러블슈팅, 설계 판단 | "N+1 문제가 발생했을 때 해결 전략은?" |
 
-### 화면 구성
+### SM-2 간격 반복 알고리즘
+
+```
+quality 매핑: Again(0) → Hard(2) → Good(4) → Easy(5)
+
+quality < 3  → repetitions 리셋, interval = 1일
+quality >= 3 → rep 0이면 1일, rep 1이면 6일, 이후 interval × EF
+
+Ease Factor: 초기 2.5, 최소 1.3
+```
+
+### Eight Gate 컬러 시스템
+
+팔문둔갑의 8개 문에서 따온 컬러 팔레트. 티어 뱃지, 덱 인디케이터, 차트 등 UI 전반에 사용됩니다.
+
+```
+Gate 1 (Opening)  → #60a5fa  Blue
+Gate 2 (Healing)  → #38bdf8  Cyan
+Gate 3 (Life)     → #34d399  Green
+Gate 4 (Pain)     → #a3e635  Lime
+Gate 5 (Limit)    → #fbbf24  Amber
+Gate 6 (View)     → #fb923c  Orange
+Gate 7 (Wonder)   → #f87171  Red
+Gate 8 (Death)    → #e11d48  Crimson
+```
+
+### IndexedDB 로컬 스토리지
+
+학습 데이터를 브라우저에 저장합니다. 서버 통신 없이 오프라인에서도 동작합니다.
+
+| Store | 내용 |
+|-------|------|
+| `cards` | 카드 메타데이터 (id, deck, tier, question, answer) |
+| `schedules` | SM-2 상태 (easeFactor, interval, nextReviewAt) |
+| `reviewLog` | 복습 기록 (quality, reviewedAt, sessionId) |
+| `settings` | 사용자 설정 (JSON) |
+
+### 머지 로직 (cards.json → IndexedDB)
+
+| 상태 | 동작 |
+|------|------|
+| 서버에 있고 로컬에 없음 | 새 카드로 추가, SM-2 초기 상태 |
+| 로컬에 있고 서버에 없음 | 삭제 (스케줄 포함) |
+| 같은 ID, sourceHash 다름 | Q/A만 갱신, SM-2 스케줄 유지 |
+| 같은 ID, sourceHash 동일 | 무시 |
+
+---
+
+## 화면 구성
+
+### 4탭
 
 | 탭 | 내용 |
 |----|------|
-| Home | 오늘의 요약, 복습/면접 시작, 새 카드 알림, 약한 카드(Leech) |
-| Decks | 덱 트리 (그룹 접기/펼치기), 덱 상세 바텀시트 |
-| Stats | 복습 히트맵, 일별 차트, 티어별 정답률 추이 |
-| Settings | 세션 설정, SM-2 파라미터, 데이터 관리 |
+| 홈 | 3칸 요약 (복습/연속일수/전체), 오늘의 목표 진행률, 복습·면접 버튼, 복습 대기 Top 3, 약한 카드 |
+| 덱 | 6개 그룹 덱 트리 (접기/펼치기), 탭 → 덱 상세 바텀시트 (티어 뱃지 + 카드 미리보기) |
+| 통계 | 총 복습/마스터/정답률, 20주 복습 히트맵, 30일 바 차트 (3색 그라데이션), 티어별 정답률 |
+| 설정 | 세션 설정 슬라이더 3종, SM-2 파라미터, 프리셋 4종, 데이터 관리 (내보내기/초기화) |
 
-## CLI 파서
+### 3 플로우 화면
 
-Kotlin CLI로 Obsidian 볼트를 파싱합니다.
+| 화면 | 진입 | 내용 |
+|------|------|------|
+| InterviewFilter | 홈 → "면접 훈련 모드" | 덱 선택(다중) + 티어 칩 + 세션 크기 + 시작 |
+| ReviewSession | 홈 → "오늘의 복습 시작" 또는 InterviewFilter | 프로그레스 바 + 질문→답변 + 4단계 평가 |
+| SessionComplete | ReviewSession 완료 | 정답률, 소요시간, 티어별 결과, 재복습/홈 |
+
+---
+
+## CLI Parser
+
+Kotlin CLI로 Obsidian 볼트를 파싱하여 `cards.json`을 생성합니다.
 
 ```bash
 $ hachimon-cli parse /path/to/vault -o ./public/cards.json
 ```
 
-**파싱 규칙:**
+### 파싱 규칙
+
 1. `## Self-Test Anchors` 이하만 스캔
 2. `#flashcard/...` 패턴으로 덱 경로 추출
 3. `### Foundation` / `### Mechanism` / `### Diagnosis`로 티어 매핑
 4. `질문?::답변` 형식으로 Q/A 분리
 5. 답변 내 마크다운 (코드블록, 볼드, 인라인코드) 보존
 
-## 로드맵
+---
 
-| 버전 | 마일스톤 |
-|------|----------|
-| v0.1 | CLI → cards.json → PWA 복습 세션 → Cloudflare 배포 |
-| v0.2 | 면접 훈련 모드 + Home + 마크다운 렌더링 + 코드 하이라이팅 |
-| v0.3 | 오프라인(SW) + 새 카드 학습 + 스와이프 + 설정 + A2HS |
-| v0.4 | Decks 탭 + Stats 탭 + Web Push 리마인더 |
-| v0.5 | FSRS 전환 검토, Obsidian 플러그인, 이미지 카드 |
+## Project Structure
 
-## 브랜딩
+```
+hachimon/
+├── src/
+│   ├── components/
+│   │   ├── ui/                 # shadcn/ui (Button, Card, Badge, Separator)
+│   │   ├── layout/             # TabBar, PageLayout
+│   │   └── shared/             # SectionLabel, StatRow, ProgressBar, TierBadge
+│   ├── pages/
+│   │   ├── Home.tsx            # 대시보드 + 액션 버튼
+│   │   ├── Decks.tsx           # 덱 트리 + 바텀시트
+│   │   ├── Stats.tsx           # 히트맵 + 차트 + 정답률
+│   │   ├── Settings.tsx        # 슬라이더 + 프리셋 + 데이터 관리
+│   │   ├── ReviewSession.tsx   # 복습 세션
+│   │   ├── InterviewFilter.tsx # 면접 훈련 필터
+│   │   └── SessionComplete.tsx # 세션 결과
+│   ├── lib/
+│   │   ├── sm2.ts              # SM-2 알고리즘
+│   │   ├── db.ts               # IndexedDB (idb) 래퍼
+│   │   └── merge.ts            # cards.json ↔ IndexedDB 머지
+│   ├── types/
+│   │   └── index.ts            # Card, Deck, Schedule, ReviewLog
+│   ├── App.tsx                 # 4탭 + 3플로우 라우팅
+│   ├── main.tsx
+│   └── index.css               # Tailwind + 다크테마 + 애니메이션
+├── public/
+│   ├── cards.json              # CLI 파서 출력물 (정적)
+│   ├── logo.png                # 앱 아이콘
+│   └── favicon.ico
+├── CLAUDE.md                   # 프로젝트 스펙 문서
+├── index.html
+├── vite.config.ts
+├── tsconfig.json
+└── package.json
+```
+
+---
+
+## Design System
+
+### 테마
+
+항상 다크 테마. zinc 팔레트 기반 + Eight Gate 액센트 컬러.
+
+| 요소 | 값 |
+|------|-----|
+| 배경 | zinc-950 (#09090b) |
+| 카드 배경 | zinc-900 (#18181b) |
+| 보더 | zinc-800 (#27272a) |
+| 1차 텍스트 | zinc-50 (#fafafa) |
+| 2차 텍스트 | zinc-400 (#a1a1aa) |
+| 프라이머리 | blue-600 (#2563eb) |
+
+### 폰트
+
+| 용도 | 폰트 | 이유 |
+|------|------|------|
+| 한글 본문 | Noto Sans KR | 작은 크기에서도 선명, 장시간 읽기에 적합 |
+| 영문/숫자 | DM Sans | 숫자 폭 고정(tabular), 0/O·1/l 혼동 없음 |
+
+### 애니메이션
+
+| 이름 | 용도 |
+|------|------|
+| `animate-up` + `stagger-1~5` | 페이지 진입 시 순차 등장 |
+| `animate-tab-in` | 탭 전환 fade |
+| `animate-expand` | 덱 트리 펼치기 |
+| `animate-sheet` + `animate-overlay` | 바텀시트 슬라이드 + 오버레이 fade |
+
+---
+
+## 설정 기본값
+
+| 항목 | 기본값 | 범위 |
+|------|--------|------|
+| 일일 신규 카드 | 10장 | 0~30 |
+| 일일 복습 상한 | 50장 | 10~200 |
+| 세션당 카드 수 | 15장 | 5~30 |
+| SM-2 초기 EF | 2.5 | 1.3~3.0 |
+| SM-2 최소 EF | 1.3 | 1.0~2.0 |
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| CLI 파서 | Kotlin + GraalVM | Obsidian Vault 파싱, 네이티브 바이너리 |
+| 프레임워크 | React 18 + TypeScript | Strict mode, 컴포넌트 기반 |
+| 스타일링 | Tailwind CSS 4 + shadcn/ui | 유틸리티 기반, 디자인 시스템 |
+| 빌드 | Vite 8 | 빠른 HMR, 최적화 빌드 |
+| 로컬 저장소 | IndexedDB (idb) | 브라우저 내 데이터 영속화, 서버 불필요 |
+| 호스팅 | Cloudflare Pages | 정적 호스팅, 글로벌 CDN |
+| 오프라인 | vite-plugin-pwa (Workbox) | Service Worker 오프라인 캐싱 |
+| 아이콘 | lucide-react | 트리 쉐이킹 가능한 SVG 아이콘 |
+
+---
+
+## Roadmap
+
+```
+v0.1 (MVP)
+  └ CLI → cards.json → PWA 복습 세션 → Cloudflare 배포
+
+v0.2
+  ├ 면접 훈련 모드
+  ├ Home/세션완료 화면
+  ├ 마크다운 렌더링
+  └ 코드 하이라이팅
+
+v0.3
+  ├ 오프라인 (Service Worker)
+  ├ 새 카드 학습
+  ├ 스와이프 제스처
+  ├ 설정
+  └ A2HS (홈 화면 추가)
+
+v0.4
+  ├ 덱 탭 + 통계 탭
+  └ Web Push 리마인더
+
+v0.5
+  ├ FSRS 전환 검토
+  ├ Obsidian 플러그인
+  └ 이미지 카드
+```
+
+---
+
+## Branding
 
 - **이름**: Hachimon (八門, 팔문)
 - **컨셉**: 나루토의 팔문둔갑술 — 복습할수록 기억의 문이 하나씩 열린다
+- **색상**: 1문(Blue) → 8문(Crimson) 그라데이션 진행
 - **도메인**: hachimon.app
 
-## 라이선스
+---
+
+## License
 
 Private
+
+---
+
+<p align="center">
+  <sub>Built with Claude Code</sub>
+</p>

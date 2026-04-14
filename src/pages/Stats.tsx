@@ -35,8 +35,6 @@ const tierAccuracy = [
   { tier: 'Diagnosis', label: '진단', color: '#f87171', pct: 58 },
 ];
 
-const weekLabels = ['일', '월', '화', '수', '목', '금', '토'];
-
 export default function Stats() {
   const heatmapData = useHeatmapData();
 

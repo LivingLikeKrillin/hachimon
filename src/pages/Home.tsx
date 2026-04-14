@@ -50,7 +50,7 @@ export default function Home() {
 
       {/* Due decks */}
       <div className="animate-up stagger-4">
-        <SectionLabel>Due Top 3</SectionLabel>
+        <SectionLabel>복습 대기 Top 3</SectionLabel>
         <Card>
           <CardContent className="p-0">
             {[

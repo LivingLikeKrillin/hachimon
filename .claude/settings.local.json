@@ -24,7 +24,11 @@
       "Bash(python:*)",
       "Bash(find /c/Users/Eisen/Desktop/Labs/*/hachimon -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" -o -name \"*.css\" \\\\\\))",
       "WebSearch",
-      "WebFetch(domain:dev.to)"
+      "WebFetch(domain:dev.to)",
+      "Bash(gh api:*)",
+      "Bash(rm -f hachimon-prototype.jsx src/components/ui/separator.tsx src/components/ui/badge.tsx)",
+      "Bash(rmdir src/hooks)",
+      "Bash(rmdir src/components/review)"
     ]
   }
 }
