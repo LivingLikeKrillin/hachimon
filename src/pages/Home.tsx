@@ -23,10 +23,10 @@ export default function Home() {
       <Card className="animate-up stagger-2">
         <CardContent className="p-4 space-y-3">
           <div className="flex justify-between items-center">
-            <p className="text-[13px] text-zinc-400">오늘의 목표</p>
-            <p className="font-display text-[14px] font-semibold tabular-nums">
+            <p className="text-[14px] text-zinc-300">오늘의 목표</p>
+            <p className="font-display text-[16px] font-bold tabular-nums">
               <span className="text-blue-400">0</span>
-              <span className="text-zinc-600 mx-1">/</span>
+              <span className="text-zinc-500 mx-1">/</span>
               <span>15</span>
             </p>
           </div>
@@ -36,13 +36,14 @@ export default function Home() {
 
       {/* Action buttons */}
       <div className="space-y-2.5 animate-up stagger-3">
-        <button className="w-full h-[52px] rounded-xl text-[15px] font-semibold flex items-center justify-center gap-2.5 transition-all duration-200 active:scale-[0.97] bg-gradient-to-r from-blue-600 to-blue-500 text-white relative overflow-hidden group">
-          <span className="absolute inset-0 bg-gradient-to-r from-blue-400/0 via-blue-400/20 to-blue-400/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
+        <button className="w-full h-[52px] rounded-xl text-[15px] font-semibold flex items-center justify-center gap-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white transition-all duration-150 active:scale-[0.96] active:from-blue-700 active:to-blue-600 active:shadow-none"
+          style={{ boxShadow: '0 2px 12px rgba(37, 99, 235, 0.15)' }}
+        >
           <Sparkles size={18} />
           오늘의 복습 시작
         </button>
-        <button className="w-full h-[52px] rounded-xl text-[15px] font-semibold flex items-center justify-center gap-2.5 transition-all duration-200 active:scale-[0.97] bg-zinc-900 border border-zinc-800 text-zinc-200 hover:border-amber-500/30 hover:text-amber-400 group">
-          <Flame size={18} className="text-amber-500 group-hover:text-amber-400 transition-colors" />
+        <button className="w-full h-[52px] rounded-xl text-[15px] font-semibold flex items-center justify-center gap-2.5 bg-zinc-900 border border-zinc-800 text-zinc-200 transition-all duration-150 active:scale-[0.96] active:bg-zinc-800">
+          <Flame size={18} className="text-amber-500" />
           면접 훈련 모드
         </button>
       </div>
@@ -68,7 +69,7 @@ export default function Home() {
                     className="w-1 h-6 rounded-full"
                     style={{ background: deck.gate }}
                   />
-                  <span className="text-[14px]">{deck.name}</span>
+                  <span className="text-[14px] text-zinc-200">{deck.name}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="font-display text-[14px] font-semibold tabular-nums" style={{ color: deck.gate }}>
@@ -91,10 +92,10 @@ export default function Home() {
               <AlertTriangle size={16} className="text-amber-400" />
             </div>
             <div className="space-y-1">
-              <p className="text-[14px]">
+              <p className="text-[14px] text-zinc-200">
                 3회 이상 틀린 카드가 <span className="text-amber-400 font-semibold">7장</span> 있습니다
               </p>
-              <p className="text-[12px] text-zinc-500">집중 복습이 필요합니다</p>
+              <p className="text-[12px] text-zinc-400">집중 복습이 필요합니다</p>
             </div>
           </CardContent>
         </Card>

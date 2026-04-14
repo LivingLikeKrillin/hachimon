@@ -1,15 +1,15 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "IBM Plex Sans KR", "IBM Plex Sans", sans-serif;
-  --font-display: "Chakra Petch", sans-serif;
+  --font-sans: "Noto Sans KR", -apple-system, sans-serif;
+  --font-display: "DM Sans", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "Consolas", monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -86,6 +86,7 @@
 
 html {
   overflow-x: hidden;
+  overflow-y: scroll;
   overscroll-behavior: none;
 }
 
@@ -126,25 +127,28 @@ body {
 .bg-gate-aura::before {
   content: '';
   position: fixed;
-  top: -120px;
+  top: -100px;
   left: 50%;
   transform: translateX(-50%);
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(96, 165, 250, 0.06) 0%,
-    rgba(248, 113, 113, 0.04) 40%,
-    transparent 70%
-  );
+  width: 500px;
+  height: 500px;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(96, 165, 250, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 30%, rgba(248, 113, 113, 0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(251, 191, 36, 0.04) 0%, transparent 60%);
   pointer-events: none;
   z-index: 0;
+  animation: aura-drift 8s ease-in-out infinite alternate;
+}
+@keyframes aura-drift {
+  from { transform: translateX(-50%) scale(1); opacity: 1; }
+  to { transform: translateX(-50%) scale(1.08); opacity: 0.8; }
 }
 
 /* === Gate glow effects === */
-.glow-blue { box-shadow: 0 0 20px rgba(96, 165, 250, 0.15), inset 0 1px 0 rgba(96, 165, 250, 0.1); }
-.glow-amber { box-shadow: 0 0 20px rgba(251, 191, 36, 0.15), inset 0 1px 0 rgba(251, 191, 36, 0.1); }
-.glow-red { box-shadow: 0 0 20px rgba(248, 113, 113, 0.15), inset 0 1px 0 rgba(248, 113, 113, 0.1); }
+.glow-blue { box-shadow: 0 0 12px rgba(96, 165, 250, 0.08); }
+.glow-amber { box-shadow: 0 0 12px rgba(251, 191, 36, 0.08); }
+.glow-red { box-shadow: 0 0 12px rgba(248, 113, 113, 0.08); }
 
 /* === Gate gradient border === */
 .border-gate-gradient {
@@ -197,6 +201,36 @@ body {
   100% { background-position: 200% center; }
 }
 
+/* Tab transition */
+@keyframes tab-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-tab-in { animation: tab-in 0.2s ease-out both; }
+
+/* Deck expand/collapse */
+@keyframes expand-in {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 200px; }
+}
+@keyframes expand-out {
+  from { opacity: 1; max-height: 200px; }
+  to { opacity: 0; max-height: 0; }
+}
+.animate-expand { animation: expand-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; overflow: hidden; }
+
+/* Overlay fade */
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.animate-overlay { animation: overlay-in 0.2s ease-out both; }
+.animate-sheet { animation: sheet-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
 /* Animation utility classes */
 .animate-up { animation: fg-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-scale { animation: fg-scale 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
@@ -211,10 +245,15 @@ body {
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
-  height: 4px;
-  border-radius: 2px;
+  height: 6px;
+  border-radius: 3px;
   background: #27272a;
   outline: none;
+  position: relative;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
 }
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -222,11 +261,13 @@ input[type="range"]::-webkit-slider-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #2563eb;
+  background: #fafafa;
   cursor: pointer;
+  margin-top: -7px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
 }
 
 /* Display font utility */
 .font-display {
-  font-family: "Chakra Petch", sans-serif;
+  font-family: "DM Sans", sans-serif;
 }

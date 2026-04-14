@@ -20,10 +20,10 @@ export default function StatRow({ items }: StatRowProps) {
         >
           {items.map((s, i) => (
             <div key={i} className="text-center px-2">
-              <p className={`font-display text-2xl font-bold tabular-nums ${s.color || 'text-zinc-100'}`}>
+              <p className={`font-display text-[28px] font-bold tabular-nums ${s.color || 'text-zinc-50'}`}>
                 {s.value}
               </p>
-              <p className="text-[11px] text-zinc-500 mt-1 tracking-wide">{s.label}</p>
+              <p className="text-[12px] text-zinc-400 mt-1">{s.label}</p>
             </div>
           ))}
         </div>

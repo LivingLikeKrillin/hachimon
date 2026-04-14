@@ -2,10 +2,10 @@ import { Home, Layers, BarChart3, Settings } from 'lucide-react';
 import type { Tab } from '@/types';
 
 const tabs: { id: Tab; label: string; icon: typeof Home }[] = [
-  { id: 'home', label: 'Home', icon: Home },
-  { id: 'decks', label: 'Decks', icon: Layers },
-  { id: 'stats', label: 'Stats', icon: BarChart3 },
-  { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'home', label: '홈', icon: Home },
+  { id: 'decks', label: '덱', icon: Layers },
+  { id: 'stats', label: '통계', icon: BarChart3 },
+  { id: 'settings', label: '설정', icon: Settings },
 ];
 
 interface TabBarProps {
@@ -31,7 +31,7 @@ export default function TabBar({ active, onChange }: TabBarProps) {
               />
             )}
             <Icon size={20} strokeWidth={active === id ? 2.2 : 1.5} />
-            <span className="font-display text-[10px] font-medium tracking-wider">{label}</span>
+            <span className="text-[10px] font-medium">{label}</span>
           </button>
         ))}
       </div>

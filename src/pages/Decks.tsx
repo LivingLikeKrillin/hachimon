@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronRight, ChevronDown, Folder, CreditCard } from 'lucide-react';
+import { ChevronRight, Folder, CreditCard } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import PageLayout from '@/components/layout/PageLayout';
 import SectionLabel from '@/components/shared/SectionLabel';
@@ -86,8 +86,8 @@ export default function Decks() {
       {/* Summary */}
       <div className="flex items-center justify-between animate-up">
         <div>
-          <p className="text-[12px] text-zinc-500">{totalDecks}개 덱</p>
-          <p className="text-[12px] text-zinc-600">{totalCards.toLocaleString()}장 카드</p>
+          <p className="text-[13px] text-zinc-400">{totalDecks}개 덱</p>
+          <p className="text-[12px] text-zinc-500">{totalCards.toLocaleString()}장 카드</p>
         </div>
       </div>
 
@@ -107,28 +107,32 @@ export default function Decks() {
                 >
                   <span className="w-1.5 h-6 rounded-full" style={{ background: group.gate }} />
                   <Folder size={16} className="text-zinc-500" />
-                  <span className="text-[14px] font-medium flex-1 text-left">{group.label}</span>
+                  <span className="text-[14px] font-semibold flex-1 text-left text-zinc-200">{group.label}</span>
                   <span className="text-[12px] text-zinc-500 tabular-nums mr-1">
                     {group.decks.reduce((s, d) => s + d.count, 0)}
                   </span>
-                  {expanded.has(group.id)
-                    ? <ChevronDown size={14} className="text-zinc-500" />
-                    : <ChevronRight size={14} className="text-zinc-500" />
-                  }
+                  <ChevronRight
+                    size={14}
+                    className={`text-zinc-500 transition-transform duration-200 ${expanded.has(group.id) ? 'rotate-90' : ''}`}
+                  />
                 </button>
 
                 {/* Deck items */}
-                {expanded.has(group.id) && group.decks.map((deck) => (
-                  <button
-                    key={deck.name}
-                    onClick={() => setSelectedDeck({ group, deck })}
-                    className="w-full flex items-center gap-3 pl-10 pr-4 py-2.5 transition-colors hover:bg-zinc-800/30 border-t border-zinc-800/30"
-                  >
-                    <CreditCard size={14} className="text-zinc-600" />
-                    <span className="text-[13px] text-zinc-300 flex-1 text-left">{deck.name}</span>
-                    <span className="text-[12px] text-zinc-500 tabular-nums">{deck.count}장</span>
-                  </button>
-                ))}
+                {expanded.has(group.id) && (
+                  <div className="animate-expand">
+                    {group.decks.map((deck) => (
+                      <button
+                        key={deck.name}
+                        onClick={() => setSelectedDeck({ group, deck })}
+                        className="w-full flex items-center gap-3 pl-10 pr-4 py-2.5 transition-colors hover:bg-zinc-800/30 border-t border-zinc-800/30"
+                      >
+                        <CreditCard size={14} className="text-zinc-600" />
+                        <span className="text-[13px] text-zinc-300 flex-1 text-left">{deck.name}</span>
+                        <span className="text-[12px] text-zinc-500 tabular-nums">{deck.count}장</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </CardContent>
@@ -138,12 +142,13 @@ export default function Decks() {
       {/* Bottom sheet (deck detail) */}
       {selectedDeck && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center"
+          className="fixed inset-0 z-50 flex items-end justify-center animate-overlay"
           onClick={() => setSelectedDeck(null)}
         >
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-[393px] bg-zinc-900 rounded-t-2xl p-5 space-y-4 animate-up"
+            className="relative w-full max-w-[393px] bg-zinc-900 rounded-t-2xl p-5 space-y-4 animate-sheet border-t border-zinc-700/30"
+            style={{ boxShadow: '0 -8px 40px rgba(0, 0, 0, 0.4)' }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Handle bar */}

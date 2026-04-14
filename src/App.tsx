@@ -35,7 +35,9 @@ export default function App() {
 
   return (
     <>
-      {pages[tab]}
+      <div key={tab} className="animate-tab-in">
+        {pages[tab]}
+      </div>
       <TabBar active={tab} onChange={setTab} />
     </>
   );

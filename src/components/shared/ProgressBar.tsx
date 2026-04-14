@@ -14,7 +14,7 @@ export default function ProgressBar({ value, max, color, h = 'h-1' }: ProgressBa
         style={{
           width: `${pct}%`,
           background: `linear-gradient(90deg, ${color}, ${color}dd)`,
-          boxShadow: pct > 0 ? `0 0 12px ${color}40` : 'none',
+          boxShadow: pct > 0 ? `0 0 6px ${color}20` : 'none',
         }}
       />
     </div>
