@@ -1,8 +1,11 @@
-import { RotateCcw, Download, Info } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { RotateCcw, Download, Info, FolderInput, Database, ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import PageLayout from '@/components/layout/PageLayout';
 import SectionLabel from '@/components/shared/SectionLabel';
+import ImportVaultModal from '@/components/settings/ImportVaultModal';
 import { useSettings } from '@/hooks/useSettings';
+import { getCardSource, getVaultMeta, useDemoCards, type CardSource, type VaultMeta } from '@/lib/data';
 
 interface SliderSettingProps {
   label: string;
@@ -49,6 +52,19 @@ function SliderSetting({ label, value, min, max, unit, color = '#60a5fa', onChan
 
 export default function Settings() {
   const { settings, loading, update } = useSettings();
+  const [source, setSource] = useState<CardSource>('demo');
+  const [vaultMeta, setVaultMeta] = useState<VaultMeta | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+
+  useEffect(() => {
+    getCardSource().then(setSource);
+    getVaultMeta().then(setVaultMeta);
+  }, []);
+
+  const revertToDemo = async () => {
+    await useDemoCards();
+    window.location.reload();
+  };
 
   if (loading) return <PageLayout><div /></PageLayout>;
 
@@ -127,8 +143,48 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Data management */}
+      {/* Card source */}
       <div className="animate-up stagger-3">
+        <SectionLabel>데이터 소스</SectionLabel>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800/60">
+            <Database size={18} className={source === 'vault' ? 'text-blue-400' : 'text-zinc-400'} />
+            <div className="flex-1">
+              <p className="text-[14px] font-medium">
+                {source === 'vault' ? '내 Obsidian Vault' : '데모 카드'}
+              </p>
+              <p className="text-[12px] text-zinc-500">
+                {source === 'vault' && vaultMeta
+                  ? `${vaultMeta.deckCount}덱 · ${vaultMeta.cardCount}장`
+                  : '샘플 데이터로 둘러보는 중'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setImportOpen(true)}
+            className="w-full flex items-center gap-3 px-4 py-4 rounded-xl bg-zinc-900 border border-zinc-800/60 transition-colors hover:bg-zinc-800/60 active:scale-[0.97]"
+          >
+            <FolderInput size={18} className="text-zinc-300" />
+            <div className="flex-1 text-left">
+              <p className="text-[14px] font-medium">Obsidian Vault 가져오기</p>
+              <p className="text-[12px] text-zinc-500">내 노트로 카드 교체 · 일정은 유지</p>
+            </div>
+            <ChevronRight size={16} className="text-zinc-600" />
+          </button>
+          {source === 'vault' && (
+            <button
+              onClick={revertToDemo}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 border border-zinc-800/60 transition-colors hover:bg-zinc-800/60 active:scale-[0.97]"
+            >
+              <RotateCcw size={16} className="text-zinc-400" />
+              <p className="text-[13px] text-zinc-400">데모 카드로 되돌리기</p>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Data management */}
+      <div className="animate-up stagger-4">
         <SectionLabel>데이터 관리</SectionLabel>
         <div className="space-y-2">
           <button className="w-full flex items-center gap-3 px-4 py-4 rounded-xl bg-zinc-900 border border-zinc-800/60 transition-colors hover:bg-zinc-800/60 active:scale-[0.97]">
@@ -147,6 +203,8 @@ export default function Settings() {
           </button>
         </div>
       </div>
+
+      {importOpen && <ImportVaultModal onClose={() => setImportOpen(false)} />}
     </PageLayout>
   );
 }

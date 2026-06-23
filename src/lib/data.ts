@@ -1,11 +1,62 @@
 import type { Card, Schedule, CardsData } from '@/types';
 import { getDB } from './db';
 import { mergeCards } from './merge';
+import { parseVault, type VaultFile } from './obsidian';
+
+/** 카드 출처: 번들 데모 vs 사용자가 임포트한 Obsidian vault */
+export type CardSource = 'demo' | 'vault';
+
+export interface VaultMeta {
+  importedAt: string;
+  fileCount: number;
+  deckCount: number;
+  cardCount: number;
+}
+
+export async function getCardSource(): Promise<CardSource> {
+  return getSetting<CardSource>('cardSource', 'demo');
+}
+
+export async function getVaultMeta(): Promise<VaultMeta | null> {
+  return getSetting<VaultMeta | null>('vaultMeta', null);
+}
 
 export async function initializeCards(): Promise<void> {
+  // vault 모드면 사용자 임포트 카드를 유지한다 (번들 데모를 fetch/merge 하지 않음)
+  if ((await getCardSource()) === 'vault') return;
+
   const res = await fetch('/cards.json');
   const data: CardsData = await res.json();
   await mergeCards(data);
+}
+
+/** 파싱 미리보기 — 사이드이펙트 없음 */
+export function previewVault(files: VaultFile[]): CardsData {
+  return parseVault(files);
+}
+
+/** 미리보기 결과를 실제로 반영: merge + vault 모드 전환 */
+export async function commitVaultImport(data: CardsData): Promise<VaultMeta> {
+  if (data.cards.length === 0) {
+    throw new Error('카드를 찾지 못했습니다. 노트 포맷을 확인하세요.');
+  }
+  await mergeCards(data);
+  const meta: VaultMeta = {
+    importedAt: new Date().toISOString(),
+    fileCount: new Set(data.cards.map((c) => c.sourceFile)).size,
+    deckCount: data.decks.length,
+    cardCount: data.cards.length,
+  };
+  await setSetting<CardSource>('cardSource', 'vault');
+  await setSetting<VaultMeta>('vaultMeta', meta);
+  return meta;
+}
+
+/** 데모 카드로 되돌리기 — vault 임포트분을 비우고 번들 샘플 복원 */
+export async function useDemoCards(): Promise<void> {
+  await setSetting<CardSource>('cardSource', 'demo');
+  await setSetting<VaultMeta | null>('vaultMeta', null);
+  await initializeCards();
 }
 
 export async function getDueCards(limit: number = 15): Promise<(Card & { schedule: Schedule })[]> {

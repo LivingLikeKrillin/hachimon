@@ -167,7 +167,19 @@ Gate 8 (Death)    → #e11d48  Crimson
 
 ---
 
+## 내 Obsidian 연동하기
+
+개별 사용자는 **앱 안에서 직접** 본인 Obsidian Vault를 가져올 수 있습니다 (CLI·배포 불필요). 앱이 `.md`를 브라우저에서 파싱해 IndexedDB에 저장하며, 노트는 어디로도 업로드되지 않습니다.
+
+> 설정 탭 → **데이터 소스 → Obsidian Vault 가져오기**
+
+자세한 노트 작성 포맷·설치·갱신 방법은 **[Obsidian 연동 가이드](docs/obsidian-guide.md)** 를 참고하세요. 인앱 파서 구현은 `src/lib/obsidian.ts` (유닛 테스트: `src/lib/obsidian.test.ts`).
+
+---
+
 ## CLI Parser
+
+> 대량 볼트를 빌드 타임에 `cards.json`으로 굽고 싶을 때를 위한 옵션입니다 (계획됨). 일반 사용자는 위의 **인앱 가져오기**로 충분합니다.
 
 Kotlin CLI로 Obsidian 볼트를 파싱하여 `cards.json`을 생성합니다.
 
