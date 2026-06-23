@@ -5,7 +5,17 @@ import PageLayout from '@/components/layout/PageLayout';
 import SectionLabel from '@/components/shared/SectionLabel';
 import ImportVaultModal from '@/components/settings/ImportVaultModal';
 import { useSettings } from '@/hooks/useSettings';
-import { getCardSource, getVaultMeta, useDemoCards, type CardSource, type VaultMeta } from '@/lib/data';
+import { getCardSource, getVaultMeta, useDemoCards, exportLearningData, resetLearningData, type CardSource, type VaultMeta } from '@/lib/data';
+
+function downloadJson(filename: string, data: unknown) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 const GOLD_FILL = 'linear-gradient(90deg,#E09A3C,#F2BC68)';
 const PURPLE_FILL = 'linear-gradient(90deg,#6E63B5,#9A90D4)';
@@ -66,6 +76,26 @@ export default function Settings() {
   }, []);
 
   const revertToDemo = async () => { await useDemoCards(); window.location.reload(); };
+
+  const [resetOpen, setResetOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const handleExport = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const data = await exportLearningData();
+      downloadJson(`hachimon-backup-${new Date().toISOString().slice(0, 10)}.json`, data);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleReset = async () => {
+    setBusy(true);
+    await resetLearningData();
+    window.location.reload();
+  };
 
   const notifyUnsupported = typeof window !== 'undefined' && !('Notification' in window);
 
@@ -226,14 +256,14 @@ export default function Settings() {
       <div className="animate-up stagger-4">
         <SectionLabel upper>데이터 관리</SectionLabel>
         <div className="space-y-2">
-          <button className="w-full flex items-center gap-3 px-4 py-4 rounded-[14px] bg-[#181B21] border border-white/[0.07] transition-colors active:bg-[#1E222A]">
+          <button onClick={handleExport} disabled={busy} className="w-full flex items-center gap-3 px-4 py-4 rounded-[14px] bg-[#181B21] border border-white/[0.07] transition-colors active:bg-[#1E222A] disabled:opacity-50">
             <Download size={18} className="text-[#C7CCD4]" />
             <div className="text-left">
               <p className="text-[14px] font-medium text-[#ECEEF2]">데이터 내보내기</p>
               <p className="text-[12px] text-[#5D636F]">학습 기록을 JSON으로 저장</p>
             </div>
           </button>
-          <button className="w-full flex items-center gap-3 px-4 py-4 rounded-[14px] bg-[#181B21] border border-[#CD746C]/20 transition-colors active:bg-[#CD746C]/[0.06]">
+          <button onClick={() => setResetOpen(true)} disabled={busy} className="w-full flex items-center gap-3 px-4 py-4 rounded-[14px] bg-[#181B21] border border-[#CD746C]/20 transition-colors active:bg-[#CD746C]/[0.06] disabled:opacity-50">
             <RotateCcw size={18} className="text-[#DD8C85]" />
             <div className="text-left">
               <p className="text-[14px] font-medium text-[#DD8C85]">학습 기록 초기화</p>
@@ -244,6 +274,34 @@ export default function Settings() {
       </div>
 
       {importOpen && <ImportVaultModal onClose={() => setImportOpen(false)} />}
+
+      {/* Reset confirm */}
+      {resetOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-7 animate-overlay" onClick={() => !busy && setResetOpen(false)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-[330px] bg-[#15171D] rounded-[20px] p-6 border border-white/[0.08] animate-scale"
+            style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="w-11 h-11 rounded-[13px] bg-[#CD746C]/15 flex items-center justify-center mb-4">
+              <RotateCcw size={21} className="text-[#DD8C85]" strokeWidth={1.8} />
+            </span>
+            <p className="text-[17px] font-semibold text-[#F4F5F7]">학습 기록 초기화</p>
+            <p className="text-[13px] text-[#969BA6] mt-2 leading-relaxed">
+              모든 복습 로그가 삭제되고 카드 스케줄이 초기 상태로 돌아갑니다. 카드는 유지되며 다시 새 카드가 됩니다. <span className="text-[#DD8C85] font-medium">되돌릴 수 없어요.</span>
+            </p>
+            <div className="grid grid-cols-2 gap-2.5 mt-6">
+              <button onClick={() => setResetOpen(false)} disabled={busy} className="h-[46px] rounded-[13px] bg-[#181B21] border border-white/[0.08] text-[14.5px] font-semibold text-[#C7CCD4] active:bg-[#1E222A] disabled:opacity-50">
+                취소
+              </button>
+              <button onClick={handleReset} disabled={busy} className="h-[46px] rounded-[13px] bg-[#CD746C] text-[14.5px] font-semibold text-[#1A0E0D] active:opacity-90 disabled:opacity-50">
+                {busy ? '초기화 중…' : '초기화'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </PageLayout>
   );
 }

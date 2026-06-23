@@ -139,9 +139,14 @@ PWA로서 오프라인에서도 동작하게 한다.
 
 ### 4-2. Decks 실데이터 연동
 
-- [ ] 덱 트리를 cards 스토어에서 path 기준 동적 생성
-- [ ] 각 덱의 카드 수, 마스터 수 실시간 계산
-- [ ] 바텀시트에서 실제 카드 미리보기
+- [x] 덱 트리를 cards 스토어에서 path 기준 동적 생성 (`Decks.tsx` buildGroups + getAllCardsByDeck)
+- [x] 각 덱의 카드 수, 마스터 수 실시간 계산 (getDeckMastery)
+- [x] 바텀시트에서 실제 카드 미리보기
+
+### 4-4. Settings 데이터 관리
+
+- [x] 데이터 내보내기 — 스케줄·복습 로그·설정을 JSON 백업으로 다운로드 (`src/lib/backup.ts` buildExport)
+- [x] 학습 기록 초기화 — 확인 모달 → 복습 로그 삭제 + 스케줄 초기화 (카드 유지, `resetLearningData`)
 
 ### 4-3. 복습 리마인더 (무서버 인앱 방식)
 
