@@ -166,6 +166,43 @@ export async function setSetting<T>(key: string, value: T): Promise<void> {
   await db.put('settings', { key, value: JSON.stringify(value) });
 }
 
+// 마스터 기준 (ROADMAP): EF ≥ 2.5 && repetitions ≥ 5
+const MASTERY_EF = 2.5;
+const MASTERY_REP = 5;
+
+export interface MasteryStats {
+  mastered: number;
+  total: number;
+}
+
+function isMastered(s: Schedule): boolean {
+  return s.easeFactor >= MASTERY_EF && s.repetitions >= MASTERY_REP;
+}
+
+/** 전체 마스터리 — 마스터한 카드 수 / 전체 카드 수 */
+export async function getMasteryStats(): Promise<MasteryStats> {
+  const db = await getDB();
+  const [schedules, total] = await Promise.all([db.getAll('schedules'), db.count('cards')]);
+  return { mastered: schedules.filter(isMastered).length, total };
+}
+
+/** 덱별 마스터리 — deckId → { mastered, total } */
+export async function getDeckMastery(): Promise<Map<string, MasteryStats>> {
+  const db = await getDB();
+  const [cards, schedules] = await Promise.all([db.getAll('cards'), db.getAll('schedules')]);
+  const schedMap = new Map(schedules.map((s) => [s.cardId, s]));
+
+  const out = new Map<string, MasteryStats>();
+  for (const card of cards) {
+    const m = out.get(card.deck) ?? { mastered: 0, total: 0 };
+    m.total++;
+    const s = schedMap.get(card.id);
+    if (s && isMastered(s)) m.mastered++;
+    out.set(card.deck, m);
+  }
+  return out;
+}
+
 export async function getAllCardsByDeck(): Promise<Map<string, Card[]>> {
   const db = await getDB();
   const cards = await db.getAll('cards');

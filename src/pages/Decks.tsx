@@ -6,8 +6,9 @@ import PageLayout from '@/components/layout/PageLayout';
 import SectionLabel from '@/components/shared/SectionLabel';
 import TierBadge from '@/components/shared/TierBadge';
 import ActionButton from '@/components/shared/ActionButton';
+import GateMeter from '@/components/shared/GateMeter';
 import { GATE_COLORS } from '@/lib/tokens';
-import { getAllCardsByDeck } from '@/lib/data';
+import { getAllCardsByDeck, getDeckMastery, type MasteryStats } from '@/lib/data';
 
 // 그룹별 게이트 색상 (1·5·7·3·6·2문)
 const GROUP_GATES: Record<string, string> = {
@@ -57,12 +58,14 @@ export default function Decks() {
   const [groups, setGroups] = useState<DeckGroup[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [selectedDeck, setSelectedDeck] = useState<{ group: DeckGroup; deck: DeckGroup['decks'][0] } | null>(null);
+  const [mastery, setMastery] = useState<Map<string, MasteryStats>>(new Map());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getAllCardsByDeck().then((map) => {
+    Promise.all([getAllCardsByDeck(), getDeckMastery()]).then(([map, masteryMap]) => {
       const built = buildGroups(map);
       setGroups(built);
+      setMastery(masteryMap);
       if (built.length > 0) {
         setExpanded(new Set([built[0].id]));
       }
@@ -71,6 +74,18 @@ export default function Decks() {
   }, []);
 
   if (loading) return <PageLayout><div /></PageLayout>;
+
+  // 덱별 마스터리 (없으면 카드 수 기준 0 마스터)
+  const deckMastery = (deck: DeckGroup['decks'][0]): MasteryStats =>
+    mastery.get(deck.id) ?? { mastered: 0, total: deck.cards.length };
+  const groupMastery = (g: DeckGroup): MasteryStats =>
+    g.decks.reduce(
+      (acc, d) => {
+        const m = deckMastery(d);
+        return { mastered: acc.mastered + m.mastered, total: acc.total + m.total };
+      },
+      { mastered: 0, total: 0 },
+    );
 
   const totalDecks = groups.reduce((sum, g) => sum + g.decks.length, 0);
   const totalCards = groups.reduce((sum, g) => sum + g.decks.reduce((s, d) => s + d.cards.length, 0), 0);
@@ -109,8 +124,9 @@ export default function Decks() {
                   <span className="w-1.5 h-6 rounded-full" style={{ background: group.gate }} />
                   <Folder size={16} className="text-zinc-500" />
                   <span className="text-[14px] font-semibold flex-1 text-left text-zinc-200">{group.label}</span>
-                  <span className="text-[12px] text-zinc-500 tabular-nums mr-1">
-                    {group.decks.reduce((s, d) => s + d.cards.length, 0)}
+                  <span className="text-[12px] tabular-nums mr-1">
+                    <span className="text-emerald-400">{groupMastery(group).mastered}</span>
+                    <span className="text-zinc-600">/{groupMastery(group).total}</span>
                   </span>
                   <ChevronRight
                     size={14}
@@ -128,7 +144,10 @@ export default function Decks() {
                       >
                         <CreditCard size={14} className="text-zinc-600" />
                         <span className="text-[13px] text-zinc-300 flex-1 text-left">{deck.name}</span>
-                        <span className="text-[12px] text-zinc-500 tabular-nums">{deck.cards.length}장</span>
+                        <span className="text-[12px] tabular-nums">
+                          <span className="text-emerald-400">{deckMastery(deck).mastered}</span>
+                          <span className="text-zinc-600">/{deckMastery(deck).total}</span>
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -166,6 +185,24 @@ export default function Decks() {
                   {selectedDeck.deck.cards.length}장
                 </p>
               </div>
+            </div>
+
+            {/* 덱 마스터리 — 八門 */}
+            <div className="rounded-xl bg-zinc-800/40 border border-zinc-800/60 p-4 space-y-3">
+              <div className="flex items-baseline justify-between">
+                <SectionLabel tight>마스터리</SectionLabel>
+                <p className="font-display text-[14px] font-bold tabular-nums">
+                  <span className="text-emerald-400">{deckMastery(selectedDeck.deck).mastered}</span>
+                  <span className="text-zinc-600 mx-0.5">/</span>
+                  <span className="text-zinc-300">{deckMastery(selectedDeck.deck).total}</span>
+                  <span className="text-[11px] text-zinc-500 ml-1">마스터</span>
+                </p>
+              </div>
+              <GateMeter
+                value={deckMastery(selectedDeck.deck).mastered}
+                max={deckMastery(selectedDeck.deck).total}
+                size={22}
+              />
             </div>
 
             <div className="flex gap-2">

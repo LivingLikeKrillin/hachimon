@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import PageLayout from '@/components/layout/PageLayout';
 import SectionLabel from '@/components/shared/SectionLabel';
 import StatRow from '@/components/shared/StatRow';
+import GateMeter from '@/components/shared/GateMeter';
 import { TIER_COLORS } from '@/lib/tokens';
+import { getMasteryStats, type MasteryStats } from '@/lib/data';
 
 // Stable mock data via useMemo
 function useHeatmapData() {
@@ -38,22 +40,43 @@ const tierAccuracy = [
 
 export default function Stats() {
   const heatmapData = useHeatmapData();
+  const [mastery, setMastery] = useState<MasteryStats>({ mastered: 0, total: 0 });
+
+  useEffect(() => {
+    getMasteryStats().then(setMastery);
+  }, []);
 
   return (
     <PageLayout>
+      {/* 八門 mastery hero */}
+      <Card className="animate-up">
+        <CardContent className="p-5 space-y-3.5">
+          <div className="flex items-baseline justify-between">
+            <p className="text-[13px] font-medium text-zinc-300">당신의 팔문</p>
+            <p className="font-display text-[16px] font-bold tabular-nums">
+              <span className="text-emerald-400">{mastery.mastered}</span>
+              <span className="text-zinc-600 mx-1">/</span>
+              <span className="text-zinc-200">{mastery.total}</span>
+              <span className="text-[12px] text-zinc-500 ml-0.5">마스터</span>
+            </p>
+          </div>
+          <GateMeter value={mastery.mastered} max={mastery.total} size={32} showCaption />
+        </CardContent>
+      </Card>
+
       {/* Summary stats */}
-      <div className="animate-up">
+      <div className="animate-up stagger-1">
         <StatRow
           items={[
             { value: '4,287', label: '총 복습', color: 'text-blue-400' },
-            { value: 312, label: '마스터', color: 'text-emerald-400' },
+            { value: mastery.mastered, label: '마스터', color: 'text-emerald-400' },
             { value: '74%', label: '정답률', color: 'text-amber-400' },
           ]}
         />
       </div>
 
       {/* Heatmap */}
-      <div className="animate-up stagger-1">
+      <div className="animate-up stagger-2">
         <SectionLabel>복습 히트맵 (20주)</SectionLabel>
         <Card>
           <CardContent className="p-4">
@@ -90,7 +113,7 @@ export default function Stats() {
       </div>
 
       {/* Daily volume chart */}
-      <div className="animate-up stagger-2">
+      <div className="animate-up stagger-3">
         <SectionLabel>일별 복습량 (30일)</SectionLabel>
         <Card>
           <CardContent className="p-4">
@@ -122,7 +145,7 @@ export default function Stats() {
       </div>
 
       {/* Tier accuracy */}
-      <div className="animate-up stagger-3">
+      <div className="animate-up stagger-4">
         <SectionLabel>티어별 정답률</SectionLabel>
         <Card>
           <CardContent className="p-4 space-y-5">
