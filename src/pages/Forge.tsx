@@ -133,6 +133,15 @@ export default function Forge({ onStart, onExit }: ForgeProps) {
       <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-5">
         {!loading && (
           <>
+            {/* Identity hint */}
+            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/5 border border-amber-500/15">
+              <Flame size={15} className="text-amber-500 mt-0.5 shrink-0" />
+              <p className="text-[12px] text-zinc-300 leading-relaxed">
+                <span className="text-amber-400 font-medium">약한 카드부터</span> 골라 거듭 벼립니다.
+                틀린 적 많거나 아직 안 굳은 카드가 먼저 나옵니다.
+              </p>
+            </div>
+
             {/* Deck selection */}
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -227,7 +236,7 @@ export default function Forge({ onStart, onExit }: ForgeProps) {
       {/* Sticky start */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[393px] px-4 pb-6 pt-3 bg-gradient-to-t from-zinc-950 via-zinc-950/95 to-transparent">
         <p className="text-center text-[12px] text-zinc-500 mb-2.5 tabular-nums">
-          조건에 맞는 <span className="text-zinc-300">{matchCount}</span>장 중{' '}
+          약점 우선 · <span className="text-zinc-300">{matchCount}</span>장 중{' '}
           <span className="text-amber-400 font-medium">{sessionCount}</span>장 단련
         </p>
         <ActionButton

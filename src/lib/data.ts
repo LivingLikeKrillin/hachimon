@@ -218,8 +218,9 @@ export async function getCardsByIds(ids: string[]): Promise<(Card & { schedule: 
 }
 
 /**
- * 단련(Forge) 카드 — 선택한 덱/티어에 맞는 카드를 due 여부와 무관하게 뽑아
- * 무작위로 섞어 limit만큼 반환한다.
+ * 단련(Forge) 카드 — 선택한 덱/티어에 맞는 카드를 due 여부와 무관하게 뽑되,
+ * **약한 카드부터** 우선 출제한다 (약점을 거듭 벼리는 모드의 정체성).
+ * 약점 = Again/Hard 횟수(reviewLog) + EF 부족 + 미학습. 동점은 살짝 흔든다.
  */
 export async function getForgeCards(
   deckIds: Set<string>,
@@ -227,18 +228,40 @@ export async function getForgeCards(
   limit: number,
 ): Promise<(Card & { schedule: Schedule })[]> {
   const db = await getDB();
-  const [cards, schedules] = await Promise.all([db.getAll('cards'), db.getAll('schedules')]);
+  const [cards, schedules, logs] = await Promise.all([
+    db.getAll('cards'),
+    db.getAll('schedules'),
+    db.getAll('reviewLog'),
+  ]);
   const schedMap = new Map(schedules.map((s) => [s.cardId, s]));
 
-  const matched = cards.filter((c) => deckIds.has(c.deck) && tiers.has(c.tier));
-  // Fisher–Yates 셔플
-  for (let i = matched.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [matched[i], matched[j]] = [matched[j], matched[i]];
+  // 카드별 stumble 수 (Again/Hard = quality < 3)
+  const stumbles = new Map<string, number>();
+  for (const log of logs) {
+    if (log.quality < 3) stumbles.set(log.cardId, (stumbles.get(log.cardId) || 0) + 1);
   }
 
+  const weakness = (c: Card): number => {
+    const s = schedMap.get(c.id);
+    const ef = s?.easeFactor ?? 2.5;
+    const rep = s?.repetitions ?? 0;
+    return (
+      (stumbles.get(c.id) || 0) +        // 가장 강한 약점 신호
+      Math.max(0, 2.5 - ef) +            // EF 부족
+      (rep === 0 ? 0.5 : 0) +            // 미학습 보정
+      Math.random() * 0.3               // 동점 흔들기
+    );
+  };
+
+  const matched = cards
+    .filter((c) => deckIds.has(c.deck) && tiers.has(c.tier))
+    .map((c) => ({ c, w: weakness(c) }))
+    .sort((a, b) => b.w - a.w) // 약한 카드부터
+    .slice(0, limit)
+    .map((x) => x.c);
+
   const out: (Card & { schedule: Schedule })[] = [];
-  for (const c of matched.slice(0, limit)) {
+  for (const c of matched) {
     const s = schedMap.get(c.id);
     if (s) out.push({ ...c, schedule: s });
   }
