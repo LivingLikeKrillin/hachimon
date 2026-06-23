@@ -106,10 +106,11 @@ PWA로서 오프라인에서도 동작하게 한다.
 
 ### 3-2. 새 카드 학습 모드
 
-- [ ] cards.json 갱신 시 새 카드 감지 (schedules에 없는 cardId)
-- [ ] Home에 새 카드 알림 배너
-- [ ] Foundation → Mechanism → Diagnosis 순차 노출
-- [ ] 새 카드 세션은 일일 신규 카드 상한 적용
+- [x] 새 카드 감지 — `lastReviewedAt === null` (merge가 항상 초기 schedule 생성하므로 "schedules에 없는"이 아님). due 풀에서 분리.
+- [x] Home에 새 카드 학습 배너 (`getNewCardCount`)
+- [x] Foundation → Mechanism → Diagnosis 순차 노출 (`src/lib/newcards.ts` selectNewCards)
+- [x] 일일 신규 카드 상한 적용 (`dailyNew − countIntroducedToday`)
+- 퀴즈형 — 기존 ReviewSession/SessionComplete 재사용. 첫 복습 시 SM-2 풀로 자동 편입.
 
 ### 3-3. 스와이프 제스처
 
