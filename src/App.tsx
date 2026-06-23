@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { Tab, Screen, Card, Schedule } from '@/types';
 import { useCards } from '@/hooks/useCards';
-import { useDueCards } from '@/hooks/useDueCards';
 import { getDueCards } from '@/lib/data';
 import type { SessionSummary } from '@/hooks/useReviewSession';
 import TabBar from '@/components/layout/TabBar';
@@ -16,16 +15,17 @@ import SessionComplete from '@/pages/SessionComplete';
 
 export default function App() {
   const { loading, error } = useCards();
-  const { cards: dueCards, refresh: refreshDue } = useDueCards();
   const [tab, setTab] = useState<Tab>('home');
   const [screen, setScreen] = useState<Screen>('tabs');
   const [sessionCards, setSessionCards] = useState<(Card & { schedule: Schedule })[]>([]);
   const [sessionSummary, setSessionSummary] = useState<SessionSummary | null>(null);
 
-  const startReview = useCallback(() => {
-    setSessionCards(dueCards);
+  // 시작 시점에 due 카드를 새로 조회 — 초기화 race를 피한다
+  const startReview = useCallback(async () => {
+    const fresh = await getDueCards(15);
+    setSessionCards(fresh);
     setScreen('review');
-  }, [dueCards]);
+  }, []);
 
   const handleComplete = useCallback((summary: SessionSummary) => {
     setSessionSummary(summary);
@@ -49,8 +49,7 @@ export default function App() {
     setTab('home');
     setSessionCards([]);
     setSessionSummary(null);
-    refreshDue();
-  }, [refreshDue]);
+  }, []);
 
   const startDeckReview = useCallback(async (deckId: string) => {
     const allDue = await getDueCards(200);

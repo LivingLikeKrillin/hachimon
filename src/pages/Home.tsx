@@ -4,7 +4,7 @@ import type { Screen } from '@/types';
 import PageLayout from '@/components/layout/PageLayout';
 import SectionLabel from '@/components/shared/SectionLabel';
 import StatRow from '@/components/shared/StatRow';
-import ProgressBar from '@/components/shared/ProgressBar';
+import GateMeter from '@/components/shared/GateMeter';
 import ActionButton from '@/components/shared/ActionButton';
 import { GATE_COLORS } from '@/lib/tokens';
 import { useHomeStats } from '@/hooks/useDueCards';
@@ -37,18 +37,19 @@ export default function Home({ onNavigate, onStartDeckReview }: HomeProps) {
         />
       </div>
 
-      {/* Daily goal */}
+      {/* Daily goal — 八門 gate hero */}
       <Card className="animate-up stagger-2">
-        <CardContent className="p-4 space-y-3">
-          <div className="flex justify-between items-center">
-            <p className="text-[14px] text-zinc-300">오늘의 목표</p>
+        <CardContent className="p-5 space-y-4">
+          <div className="flex justify-between items-baseline">
+            <p className="text-[13px] font-medium text-zinc-300">오늘의 목표</p>
             <p className="font-display text-[16px] font-bold tabular-nums">
               <span className="text-blue-400">{stats.todayReviewed}</span>
-              <span className="text-zinc-500 mx-1">/</span>
-              <span>{settings.sessionSize}</span>
+              <span className="text-zinc-600 mx-1">/</span>
+              <span className="text-zinc-200">{settings.sessionSize}</span>
+              <span className="text-[12px] text-zinc-500 ml-0.5">장</span>
             </p>
           </div>
-          <ProgressBar value={stats.todayReviewed} max={settings.sessionSize} color="#60a5fa" h="h-2" />
+          <GateMeter value={stats.todayReviewed} max={settings.sessionSize} size={30} showCaption />
         </CardContent>
       </Card>
 

@@ -2,6 +2,7 @@ import { CheckCircle, RotateCcw, Home, Clock, Target } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import SectionLabel from '@/components/shared/SectionLabel';
 import TierBadge from '@/components/shared/TierBadge';
+import GateMeter from '@/components/shared/GateMeter';
 import ActionButton from '@/components/shared/ActionButton';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import { accuracyColor } from '@/lib/tokens';
@@ -56,6 +57,12 @@ export default function SessionComplete({ summary, onRetry, onHome }: SessionCom
         <p className="text-[13px] text-zinc-500">
           {totalCards}장 중 {correctCount}장 정답
         </p>
+
+        {/* 八門 개방 — 세션 완주 페이오프 */}
+        <div className="mt-5 px-2">
+          <GateMeter value={1} max={1} size={24} />
+          <p className="text-[11px] text-zinc-500 mt-2 tracking-[0.15em]">팔문 개방 · 八門遁甲</p>
+        </div>
       </div>
 
       {/* Quick stats */}

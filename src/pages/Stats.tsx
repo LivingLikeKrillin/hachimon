@@ -94,24 +94,22 @@ export default function Stats() {
         <SectionLabel>일별 복습량 (30일)</SectionLabel>
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-end gap-[4px] h-[100px]">
+            <div className="flex items-end gap-[3px] h-[100px]">
               {dailyData.map((val, i) => {
                 const ratio = val / maxDaily;
                 return (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-0">
-                    <div
-                      className="w-full rounded-t-md"
-                      style={{
-                        height: `${ratio * 100}%`,
-                        background: ratio < 0.4
-                          ? 'linear-gradient(to top, #1e3a5f, #3b82f6)'
-                          : ratio < 0.7
-                            ? 'linear-gradient(to top, #92400e, #fbbf24)'
-                            : 'linear-gradient(to top, #991b1b, #f87171)',
-                        minHeight: '4px',
-                      }}
-                    />
-                  </div>
+                  <div
+                    key={i}
+                    className="flex-1 rounded-t-[3px] transition-[height] duration-500"
+                    style={{
+                      height: `${Math.max(ratio * 100, 5)}%`,
+                      background: ratio < 0.4
+                        ? 'linear-gradient(to top, #1e3a5f, #3b82f6)'
+                        : ratio < 0.7
+                          ? 'linear-gradient(to top, #92400e, #fbbf24)'
+                          : 'linear-gradient(to top, #991b1b, #f87171)',
+                    }}
+                  />
                 );
               })}
             </div>

@@ -4,6 +4,7 @@ import rehypeHighlight from 'rehype-highlight';
 import type { Quality, Card, Schedule } from '@/types';
 import TierBadge from '@/components/shared/TierBadge';
 import SectionLabel from '@/components/shared/SectionLabel';
+import GateMeter from '@/components/shared/GateMeter';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import { useReviewSession } from '@/hooks/useReviewSession';
 import type { SessionSummary } from '@/hooks/useReviewSession';
@@ -26,7 +27,6 @@ export default function ReviewSession({ cards, onComplete, onExit }: ReviewSessi
     currentCard,
     currentIndex,
     totalCards,
-    progress,
     flipped,
     finished,
     flip,
@@ -65,14 +65,9 @@ export default function ReviewSession({ cards, onComplete, onExit }: ReviewSessi
         <div className="w-10" />
       </div>
 
-      {/* Progress bar */}
+      {/* Progress — 八門 gates open as you advance */}
       <div className="px-4 mb-4">
-        <div className="w-full h-1 bg-zinc-800 rounded-full overflow-hidden">
-          <div
-            className="h-1 rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-300"
-            style={{ width: `${progress * 100}%` }}
-          />
-        </div>
+        <GateMeter value={currentIndex} max={totalCards} size={18} />
       </div>
 
       {/* Card area */}
