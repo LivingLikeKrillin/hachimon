@@ -129,11 +129,11 @@ PWA로서 오프라인에서도 동작하게 한다.
 
 ### 4-1. Stats 실데이터 연동
 
-- [ ] 총 복습 횟수: reviewLog 전체 count
-- [ ] 마스터 카드 수: easeFactor >= 2.5 && repetitions >= 5
-- [ ] 평균 정답률: (Good+Easy) / 전체 reviewLog
-- [ ] 20주 히트맵: reviewLog.reviewedAt 기준 일별 집계
-- [ ] 30일 바 차트: 최근 30일 일별 복습량
+- [x] 총 복습 횟수: reviewLog 전체 count
+- [x] 마스터 카드 수: easeFactor >= 2.5 && repetitions >= 5
+- [x] 평균 정답률: (Good+Easy) / 전체 reviewLog
+- [x] 20주 히트맵: reviewLog.reviewedAt 기준 일별 집계 (`src/lib/stats.ts` buildHeatmap)
+- [x] 30일 바 차트: 최근 30일 일별 복습량 (`src/lib/stats.ts` buildDailyVolume)
 - [ ] 티어별 정답률 추이: tier 기준 그룹핑
 
 ### 4-2. Decks 실데이터 연동

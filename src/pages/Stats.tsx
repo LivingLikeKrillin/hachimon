@@ -1,20 +1,7 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import PageLayout from '@/components/layout/PageLayout';
-import { getMasteryStats, type MasteryStats } from '@/lib/data';
-
-function useHeatmap() {
-  return useMemo(() => {
-    const seed = [3,0,12,8,0,25,18,7,14,0,22,5,19,0,31,10,0,27,6,15,
-      0,9,20,4,0,28,11,0,16,23,8,0,33,7,21,0,13,26,0,17,
-      5,0,30,9,0,24,14,0,19,11,28,0,6,22,0,35,8,15,0,20,
-      12,0,27,4,18,0,29,7,0,23,10,31,0,16,5,0,26,13,0,21,
-      8,0,34,11,0,19,6,25,0,14,28,0,9,17,0,32,7,20,0,15,
-      0,23,10,0,27,5,18,0,30,8,0,22,12,0,26,4,16,0,29,11,
-      0,24,6,19,0,33,9,0,21,13,0,28,7,15,0,31,10,0,25,3];
-    return seed;
-  }, []);
-}
+import { getMasteryStats, getReviewStats, type MasteryStats, type ReviewStats } from '@/lib/data';
 
 function heatColor(n: number): string {
   if (n === 0) return '#14161B';
@@ -24,16 +11,25 @@ function heatColor(n: number): string {
   return '#6E8BC9';
 }
 
-const daily = [18,25,12,30,8,22,35,15,28,10,32,20,14,38,16,24,9,33,19,27,11,36,21,13,29,7,31,17,26,40];
-const maxDaily = Math.max(...daily);
+const EMPTY_STATS: ReviewStats = {
+  summary: { total: 0, accuracy: 0 },
+  heatmap: new Array(140).fill(0),
+  daily: new Array(30).fill(0),
+};
 
 export default function Stats() {
-  const heat = useHeatmap();
   const [mastery, setMastery] = useState<MasteryStats>({ mastered: 0, total: 0 });
+  const [stats, setStats] = useState<ReviewStats>(EMPTY_STATS);
 
-  useEffect(() => { getMasteryStats().then(setMastery); }, []);
+  useEffect(() => {
+    getMasteryStats().then(setMastery);
+    getReviewStats().then(setStats);
+  }, []);
 
   const masterPct = mastery.total > 0 ? (mastery.mastered / mastery.total) * 100 : 0;
+  const { summary, heatmap: heat, daily } = stats;
+  const maxDaily = Math.max(1, ...daily);
+  const accuracyPct = Math.round(summary.accuracy * 100);
 
   return (
     <PageLayout>
@@ -57,9 +53,9 @@ export default function Stats() {
       <Card className="animate-up stagger-1">
         <CardContent className="flex items-center px-1.5 py-[18px]">
           {[
-            { v: '4,287', l: '총 복습', c: '#ECEEF2' },
+            { v: summary.total.toLocaleString(), l: '총 복습', c: summary.total === 0 ? '#5D636F' : '#ECEEF2' },
             { v: mastery.mastered, l: '마스터', c: mastery.mastered === 0 ? '#5D636F' : '#ECEEF2' },
-            { v: '74%', l: '정답률', c: '#5FA88A' },
+            { v: `${accuracyPct}%`, l: '정답률', c: summary.total === 0 ? '#5D636F' : '#5FA88A' },
           ].map((s, i) => (
             <div key={i} className={`flex-1 text-center ${i > 0 ? 'border-l border-white/[0.08]' : ''}`}>
               <div className="font-num text-[25px] font-semibold leading-none" style={{ color: s.c }}>{s.v}</div>
