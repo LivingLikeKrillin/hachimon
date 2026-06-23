@@ -15,27 +15,28 @@ interface TabBarProps {
 
 export default function TabBar({ active, onChange }: TabBarProps) {
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[393px] bg-zinc-950/95 backdrop-blur-xl border-t border-zinc-800/40 z-50">
-      <div className="flex justify-around h-12">
-        {tabs.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => onChange(id)}
-            className={`relative flex flex-col items-center justify-center min-w-[64px] min-h-[44px] gap-0.5 transition-all duration-200 ${
-              active === id ? 'text-blue-400' : 'text-zinc-600'
-            }`}
-          >
-            {active === id && (
-              <span
-                className="absolute -top-px left-1/2 -translate-x-1/2 w-8 h-[2px] rounded-full bg-gradient-to-r from-blue-400 to-cyan-400"
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[393px] bg-[#0C0D11]/85 backdrop-blur-xl border-t border-white/[0.07] z-50">
+      <div className="flex justify-around h-[52px]">
+        {tabs.map(({ id, label, icon: Icon }) => {
+          const on = active === id;
+          return (
+            <button
+              key={id}
+              onClick={() => onChange(id)}
+              className="relative flex flex-col items-center justify-center min-w-[64px] gap-1.5 transition-colors"
+              style={{ color: on ? '#E9A94C' : '#5D636F' }}
+            >
+              <Icon
+                size={23}
+                strokeWidth={on ? 1.9 : 1.7}
+                style={on ? { filter: 'drop-shadow(0 0 8px rgba(233,169,76,0.5))' } : undefined}
               />
-            )}
-            <Icon size={20} strokeWidth={active === id ? 2.2 : 1.5} />
-            <span className="text-[10px] font-medium">{label}</span>
-          </button>
-        ))}
+              <span className="text-[11px]" style={{ fontWeight: on ? 600 : 500 }}>{label}</span>
+            </button>
+          );
+        })}
       </div>
-      <div className="pb-safe" />
+      <div className="pb-safe" style={{ minHeight: 24 }} />
     </nav>
   );
 }

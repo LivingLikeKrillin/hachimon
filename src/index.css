@@ -7,22 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Noto Sans KR", -apple-system, sans-serif;
-  --font-display: "DM Sans", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "Consolas", monospace;
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
+  --font-sans: "Geist", "Noto Sans KR", -apple-system, sans-serif;
+  --font-display: "Geist", "Noto Sans KR", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "Consolas", monospace;
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -45,42 +32,46 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Hachimon — always dark theme (zinc palette + gate colors) */
+/* Hachimon — refined dark + single gold accent (Quench) */
 :root {
-  --radius: 0.625rem;
-  --background: #09090b;
-  --foreground: #fafafa;
-  --card: #18181b;
-  --card-foreground: #fafafa;
-  --popover: #18181b;
-  --popover-foreground: #fafafa;
-  --primary: #2563eb;
-  --primary-foreground: #fafafa;
-  --secondary: #27272a;
-  --secondary-foreground: #fafafa;
-  --muted: #27272a;
-  --muted-foreground: #a1a1aa;
-  --accent: #27272a;
-  --accent-foreground: #fafafa;
-  --destructive: #ef4444;
-  --border: #27272a;
-  --input: #27272a;
-  --ring: #2563eb;
-  --chart-1: #60a5fa;
-  --chart-2: #fbbf24;
-  --chart-3: #f87171;
-  --chart-4: #34d399;
-  --chart-5: #a78bfa;
+  --radius: 0.875rem;
+  --background: #0C0D11;
+  --foreground: #ECEEF2;
+  --card: #15171D;
+  --card-foreground: #ECEEF2;
+  --popover: #15171D;
+  --popover-foreground: #ECEEF2;
+  --primary: #E9A94C;             /* gold */
+  --primary-foreground: #241606;
+  --secondary: #181B21;
+  --secondary-foreground: #ECEEF2;
+  --muted: #181B21;
+  --muted-foreground: #969BA6;
+  --accent: #181B21;
+  --accent-foreground: #ECEEF2;
+  --destructive: #CD746C;
+  --border: rgba(255, 255, 255, 0.07);
+  --input: rgba(255, 255, 255, 0.09);
+  --ring: #E9A94C;
 
-  /* Eight Gate colors */
-  --gate-1: #60a5fa; /* Opening - blue */
-  --gate-2: #38bdf8; /* Healing - cyan */
-  --gate-3: #34d399; /* Life - green */
-  --gate-4: #a3e635; /* Pain - lime */
-  --gate-5: #fbbf24; /* Limit - amber */
-  --gate-6: #fb923c; /* View - orange */
-  --gate-7: #f87171; /* Wonder - red */
-  --gate-8: #e11d48; /* Death - crimson */
+  /* Surfaces */
+  --surface: #15171D;
+  --surface-2: #181B21;
+  --surface-nested: #101218;
+  --track: #0E1015;
+
+  /* Text scale */
+  --t1: #F4F5F7;
+  --t2: #C7CCD4;
+  --t3: #969BA6;
+  --t4: #5D636F;
+  --t5: #4A505B;
+
+  /* Muted tier / semantic */
+  --tier-foundation: #6E8BC9;
+  --tier-mechanism: #CFA24E;
+  --tier-diagnosis: #CD746C;
+  --ok: #5FB991;
 }
 
 html {
@@ -91,9 +82,12 @@ html {
 
 body {
   margin: 0;
-  background: var(--background);
+  background:
+    radial-gradient(115% 70% at 50% -6%, #101217 0%, #0C0D11 58%);
+  background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
@@ -102,257 +96,125 @@ body {
   -webkit-user-select: none;
 }
 
-/* Subtle film grain overlay — adds premium texture over the dark UI */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.03;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
 /* Safe area utilities */
-.pt-safe {
-  padding-top: env(safe-area-inset-top, 0px);
-}
-.pb-safe {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
+.pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
   }
 }
 
-/* === Background atmosphere === */
-.bg-gate-aura {
-  position: relative;
+/* === Surfaces & buttons === */
+.surface {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
-.bg-gate-aura::before {
-  content: '';
-  position: fixed;
-  top: -100px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 500px;
-  height: 500px;
-  background:
-    radial-gradient(ellipse at 30% 20%, rgba(96, 165, 250, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at 70% 30%, rgba(248, 113, 113, 0.07) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(251, 191, 36, 0.04) 0%, transparent 60%);
-  pointer-events: none;
-  z-index: 0;
-  animation: aura-drift 8s ease-in-out infinite alternate;
+.btn-gold {
+  background: linear-gradient(180deg, #F2B662 0%, #E59A3A 100%);
+  color: #241606;
+  box-shadow: 0 10px 28px -8px rgba(233, 169, 76, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
-@keyframes aura-drift {
-  from { transform: translateX(-50%) scale(1); opacity: 1; }
-  to { transform: translateX(-50%) scale(1.08); opacity: 0.8; }
+.btn-gold:active { background: linear-gradient(180deg, #F0AC50 0%, #D98E32 100%); }
+.btn-tile {
+  background: var(--surface-2);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: var(--foreground);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
+.btn-tile:active { background: #1E222A; }
 
-/* === Gate glow effects === */
-.glow-blue { box-shadow: 0 0 12px rgba(96, 165, 250, 0.08); }
-.glow-amber { box-shadow: 0 0 12px rgba(251, 191, 36, 0.08); }
-.glow-red { box-shadow: 0 0 12px rgba(248, 113, 113, 0.08); }
+.font-num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+.font-display { font-family: "Geist", "Noto Sans KR", sans-serif; }
 
-/* === Gate gradient border === */
-.border-gate-gradient {
-  border: 1px solid transparent;
-  background-clip: padding-box;
-  position: relative;
-}
-.border-gate-gradient::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(135deg, var(--gate-1), var(--gate-5), var(--gate-7));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0.3;
-  pointer-events: none;
-}
-
-/* === Hachimon animations === */
-@keyframes fg-slide {
-  from { transform: translateX(20px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes fg-up {
-  from { transform: translateY(12px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-@keyframes fg-scale {
-  from { transform: scale(0.92); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-@keyframes fg-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
-/* Tab transition */
-@keyframes tab-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-.animate-tab-in { animation: tab-in 0.2s ease-out both; }
-
-/* Deck expand/collapse */
-@keyframes expand-in {
-  from { opacity: 0; max-height: 0; }
-  to { opacity: 1; max-height: 200px; }
-}
-@keyframes expand-out {
-  from { opacity: 1; max-height: 200px; }
-  to { opacity: 0; max-height: 0; }
-}
+/* === Animations === */
+@keyframes fg-up { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes fg-scale { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes tab-in { from { opacity: 0; } to { opacity: 1; } }
+.animate-tab-in { animation: tab-in 0.22s ease-out both; }
+@keyframes expand-in { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 240px; } }
 .animate-expand { animation: expand-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; overflow: hidden; }
-
-/* Overlay fade */
-@keyframes overlay-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes sheet-up {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
+@keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 .animate-overlay { animation: overlay-in 0.2s ease-out both; }
 .animate-sheet { animation: sheet-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-/* === Gate meter (八門) === */
-@keyframes gate-open {
-  from { opacity: 0; transform: translateY(5px) scale(0.88); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes gate-pulse {
-  0%, 100% { filter: drop-shadow(0 0 3px var(--gate-glow)); }
-  50% { filter: drop-shadow(0 0 8px var(--gate-glow)); }
-}
-
-/* Animation utility classes */
 .animate-up { animation: fg-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-scale { animation: fg-scale 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.animate-slide { animation: fg-slide 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.stagger-1 { animation-delay: 60ms; }
-.stagger-2 { animation-delay: 120ms; }
-.stagger-3 { animation-delay: 180ms; }
-.stagger-4 { animation-delay: 240ms; }
-.stagger-5 { animation-delay: 300ms; }
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
 
-/* Custom range slider */
+/* === Range slider === */
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   height: 6px;
-  border-radius: 3px;
-  background: #27272a;
+  border-radius: 99px;
+  background: var(--track);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
   outline: none;
-  position: relative;
 }
-input[type="range"]::-webkit-slider-runnable-track {
-  height: 6px;
-  border-radius: 3px;
-}
+input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 99px; }
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  background: #fafafa;
+  background: #F6F7F9;
   cursor: pointer;
-  margin-top: -7px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  margin-top: -8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
 
-/* === Code syntax highlighting (One Dark Pro) === */
+/* === Code syntax highlighting (muted, matches mockup) === */
 .prose-hachimon pre code.hljs { background: none; padding: 0; }
-.hljs { color: #e6edf3; }
-.hljs-keyword,
-.hljs-built_in { color: #ff7b72; }
-.hljs-type,
-.hljs-class .hljs-title,
-.hljs-title.class_ { color: #79c0ff; }
-.hljs-string { color: #a5d6ff; }
-.hljs-attr,
-.hljs-meta { color: #d2a8ff; }
-.hljs-comment { color: #6e7681; font-style: italic; }
-.hljs-number,
-.hljs-literal { color: #79c0ff; }
-.hljs-variable,
-.hljs-property { color: #7ee787; }
-.hljs-punctuation { color: #b1bac4; }
-.hljs-params { color: #e6edf3; }
+.hljs { color: #C7CCD4; }
+.hljs-keyword, .hljs-built_in { color: #9A90D4; }
+.hljs-type, .hljs-class .hljs-title, .hljs-title.class_ { color: #8FB0DE; }
+.hljs-string { color: #93C9A8; }
+.hljs-attr, .hljs-meta { color: #DDB868; }
+.hljs-comment { color: #5D636F; font-style: italic; }
+.hljs-number, .hljs-literal { color: #8FB0DE; }
+.hljs-variable, .hljs-property { color: #C7CCD4; }
+.hljs-punctuation { color: #969BA6; }
+.hljs-params { color: #C7CCD4; }
 
-/* Markdown prose for card answers */
+/* === Markdown prose for card answers === */
 .prose-hachimon p { margin: 0.5em 0; }
 .prose-hachimon p:first-child { margin-top: 0; }
-.prose-hachimon strong { color: #fafafa; font-weight: 600; }
+.prose-hachimon strong { color: #F4F5F7; font-weight: 600; }
 .prose-hachimon code {
-  background: #27272a;
-  color: #60a5fa;
+  background: #0D0F14;
+  color: #E9A94C;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: 5px;
   font-size: 13px;
   font-family: var(--font-mono);
 }
 .prose-hachimon pre {
-  background: #0d1117;
-  border: 1px solid #27272a;
-  border-radius: 10px;
-  padding: 14px 16px;
+  background: #0D0F14;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 13px;
+  padding: 16px;
   overflow-x: auto;
-  margin: 10px 0;
-  position: relative;
+  margin: 12px 0;
 }
 .prose-hachimon pre code {
   background: none;
   padding: 0;
-  color: #e6edf3;
-  font-size: 12px;
-  line-height: 1.7;
-  counter-reset: line;
+  color: #C7CCD4;
+  font-size: 12.5px;
+  line-height: 1.75;
 }
-.prose-hachimon pre code .hljs-ln-line {
-  counter-increment: line;
-}
-/* Language label */
-.prose-hachimon pre[class*="language-"]::before,
-.prose-hachimon pre:has(code[class*="language-"])::before {
-  content: attr(data-language);
-  position: absolute;
-  top: 6px;
-  right: 10px;
-  font-size: 10px;
-  color: #484f58;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.prose-hachimon ul, .prose-hachimon ol {
-  padding-left: 1.2em;
-  margin: 0.5em 0;
-}
+.prose-hachimon ul, .prose-hachimon ol { padding-left: 1.2em; margin: 0.5em 0; }
 .prose-hachimon li { margin: 0.25em 0; }
-.prose-hachimon li::marker { color: #52525b; }
-.prose-hachimon hr {
-  border: none;
-  border-top: 1px solid #27272a;
-  margin: 0.75em 0;
-}
-
-/* Display font utility */
-.font-display {
-  font-family: "DM Sans", sans-serif;
-}
+.prose-hachimon li::marker { color: #5D636F; }
+.prose-hachimon hr { border: none; border-top: 1px solid rgba(255, 255, 255, 0.07); margin: 0.8em 0; }
