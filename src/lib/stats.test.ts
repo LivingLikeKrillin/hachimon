@@ -1,6 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import type { ReviewLog } from '@/types';
-import { summarizeReviews, buildHeatmap, buildDailyVolume } from './stats';
+import type { ReviewLog, Card, Tier } from '@/types';
+import { summarizeReviews, buildHeatmap, buildDailyVolume, tierAccuracy, findLeeches } from './stats';
+
+function card(id: string, tier: Tier): Card {
+  return { id, deck: 'd', tier, question: `Q-${id}`, answer: 'A', sourceFile: 'f.md', sourceHash: 'h' };
+}
+
+function rl(cardId: string, quality: number): ReviewLog {
+  return { cardId, quality, reviewedAt: '2026-06-24T00:00:00.000Z', sessionId: 's' };
+}
 
 // 로컬 정오 기준 ISO 문자열 — 타임존과 무관하게 같은 로컬 날짜로 round-trip 된다.
 function isoDaysAgo(now: Date, days: number): string {
@@ -77,5 +85,69 @@ describe('buildDailyVolume', () => {
   it('범위 밖(30일 초과) 로그는 제외', () => {
     const vol = buildDailyVolume([log(isoDaysAgo(now, 30), 4)], now, 30);
     expect(vol.reduce((a, b) => a + b, 0)).toBe(0);
+  });
+});
+
+describe('tierAccuracy', () => {
+  const tierByCard = new Map<string, Tier>([
+    ['f1', 'foundation'],
+    ['m1', 'mechanism'],
+    ['d1', 'diagnosis'],
+  ]);
+
+  it('항상 foundation/mechanism/diagnosis 3개를 순서대로 반환', () => {
+    const r = tierAccuracy([], tierByCard);
+    expect(r.map((t) => t.tier)).toEqual(['foundation', 'mechanism', 'diagnosis']);
+  });
+
+  it('티어별 total과 정답률(quality>=4)을 집계', () => {
+    const logs = [rl('f1', 5), rl('f1', 0), rl('m1', 4), rl('m1', 4)];
+    const r = tierAccuracy(logs, tierByCard);
+    const f = r.find((t) => t.tier === 'foundation')!;
+    const m = r.find((t) => t.tier === 'mechanism')!;
+    const d = r.find((t) => t.tier === 'diagnosis')!;
+    expect(f.total).toBe(2);
+    expect(f.accuracy).toBeCloseTo(0.5, 5);
+    expect(m.total).toBe(2);
+    expect(m.accuracy).toBeCloseTo(1, 5);
+    expect(d.total).toBe(0);
+    expect(d.accuracy).toBe(0);
+  });
+
+  it('티어 매핑이 없는 cardId 로그는 무시', () => {
+    const r = tierAccuracy([rl('ghost', 5)], tierByCard);
+    expect(r.every((t) => t.total === 0)).toBe(true);
+  });
+});
+
+describe('findLeeches', () => {
+  const cards = [card('a', 'foundation'), card('b', 'mechanism'), card('c', 'diagnosis')];
+
+  it('Again(0)이 임계치(기본 3) 미만이면 제외', () => {
+    const logs = [rl('a', 0), rl('a', 0)]; // 2회
+    expect(findLeeches(logs, cards)).toEqual([]);
+  });
+
+  it('Again이 3회 이상인 카드만, againCount 내림차순', () => {
+    const logs = [
+      rl('a', 0), rl('a', 0), rl('a', 0), // a: 3
+      rl('b', 0), rl('b', 0), rl('b', 0), rl('b', 0), // b: 4
+      rl('c', 0), rl('c', 4), // c: 1 (제외)
+    ];
+    const leeches = findLeeches(logs, cards);
+    expect(leeches.map((l) => l.cardId)).toEqual(['b', 'a']);
+    expect(leeches[0].againCount).toBe(4);
+    expect(leeches[0].question).toBe('Q-b');
+    expect(leeches[0].tier).toBe('mechanism');
+  });
+
+  it('Again만 카운트 — Hard(2)는 leech가 아니다', () => {
+    const logs = [rl('a', 2), rl('a', 2), rl('a', 2)];
+    expect(findLeeches(logs, cards)).toEqual([]);
+  });
+
+  it('카드 메타가 없는 cardId는 제외', () => {
+    const logs = [rl('ghost', 0), rl('ghost', 0), rl('ghost', 0)];
+    expect(findLeeches(logs, cards)).toEqual([]);
   });
 });

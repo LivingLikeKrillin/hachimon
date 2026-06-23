@@ -113,13 +113,13 @@ PWA로서 오프라인에서도 동작하게 한다.
 
 ### 3-3. 스와이프 제스처
 
-- [ ] ReviewSession에서 좌/우 스와이프로 Again/Easy 평가
-- [ ] 터치 이벤트 기반 (라이브러리 없이)
+- [x] ReviewSession에서 좌/우 스와이프로 Again/Easy 평가 (좌→모름, 우→쉬움)
+- [x] 터치 이벤트 기반 (라이브러리 없이, `src/lib/gesture.ts` resolveSwipe)
 
 ### 3-4. 약한 카드 (Leech) 탐지
 
-- [ ] reviewLog에서 3회 이상 Again 평가된 카드 조회
-- [ ] Home 약한 카드 섹션에 실제 데이터 표시
+- [x] reviewLog에서 3회 이상 Again 평가된 카드 조회 (`src/lib/stats.ts` findLeeches)
+- [x] Home 약한 카드 섹션에 실제 데이터 표시
 
 ---
 
@@ -134,7 +134,7 @@ PWA로서 오프라인에서도 동작하게 한다.
 - [x] 평균 정답률: (Good+Easy) / 전체 reviewLog
 - [x] 20주 히트맵: reviewLog.reviewedAt 기준 일별 집계 (`src/lib/stats.ts` buildHeatmap)
 - [x] 30일 바 차트: 최근 30일 일별 복습량 (`src/lib/stats.ts` buildDailyVolume)
-- [ ] 티어별 정답률 추이: tier 기준 그룹핑
+- [x] 티어별 정답률 추이: tier 기준 그룹핑 (`src/lib/stats.ts` tierAccuracy)
 
 ### 4-2. Decks 실데이터 연동
 

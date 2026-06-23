@@ -1,7 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import PageLayout from '@/components/layout/PageLayout';
+import type { Tier } from '@/types';
 import { getMasteryStats, getReviewStats, type MasteryStats, type ReviewStats } from '@/lib/data';
+
+const TIER_META: Record<Tier, { label: string; dot: string; text: string }> = {
+  foundation: { label: 'Foundation', dot: '#6E8BC9', text: '#93A8DC' },
+  mechanism: { label: 'Mechanism', dot: '#CFA24E', text: '#DDB868' },
+  diagnosis: { label: 'Diagnosis', dot: '#CD746C', text: '#DD8C85' },
+};
 
 function heatColor(n: number): string {
   if (n === 0) return '#14161B';
@@ -15,6 +22,11 @@ const EMPTY_STATS: ReviewStats = {
   summary: { total: 0, accuracy: 0 },
   heatmap: new Array(140).fill(0),
   daily: new Array(30).fill(0),
+  tierStats: [
+    { tier: 'foundation', total: 0, accuracy: 0 },
+    { tier: 'mechanism', total: 0, accuracy: 0 },
+    { tier: 'diagnosis', total: 0, accuracy: 0 },
+  ],
 };
 
 export default function Stats() {
@@ -27,7 +39,7 @@ export default function Stats() {
   }, []);
 
   const masterPct = mastery.total > 0 ? (mastery.mastered / mastery.total) * 100 : 0;
-  const { summary, heatmap: heat, daily } = stats;
+  const { summary, heatmap: heat, daily, tierStats } = stats;
   const maxDaily = Math.max(1, ...daily);
   const accuracyPct = Math.round(summary.accuracy * 100);
 
@@ -116,6 +128,43 @@ export default function Stats() {
                 />
               ))}
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tier accuracy */}
+      <div className="animate-up stagger-4">
+        <div className="flex items-baseline justify-between mb-3 px-0.5">
+          <span className="text-[13px] font-semibold text-[#969BA6] tracking-[0.02em]">티어별 정답률</span>
+        </div>
+        <Card>
+          <CardContent className="p-[18px] flex flex-col gap-[17px]">
+            {tierStats.map((t) => {
+              const meta = TIER_META[t.tier];
+              const pct = Math.round(t.accuracy * 100);
+              return (
+                <div key={t.tier}>
+                  <div className="flex items-baseline justify-between mb-2">
+                    <span className="text-[13.5px] font-medium" style={{ color: meta.text }}>{meta.label}</span>
+                    <span className="font-num text-[12.5px] text-[#5D636F]">
+                      {t.total === 0 ? (
+                        '—'
+                      ) : (
+                        <>
+                          <span className="text-[14px] font-semibold text-[#ECEEF2]">{pct}%</span> · {t.total}회
+                        </>
+                      )}
+                    </span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-[#0E1015] shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)] overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-[width] duration-500"
+                      style={{ width: `${pct}%`, background: meta.dot }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
       </div>

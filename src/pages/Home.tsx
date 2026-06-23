@@ -106,13 +106,32 @@ export default function Home({ onNavigate, onStartDeckReview }: HomeProps) {
       <div className="animate-up stagger-4">
         <SectionLabel>약한 카드</SectionLabel>
         <Card>
-          <CardContent className="p-6 flex flex-col items-center text-center gap-1.5">
-            <span className="w-[38px] h-[38px] rounded-[11px] bg-[#181B21] border border-white/[0.07] flex items-center justify-center mb-1.5">
-              <Flame size={19} className="text-[#5D636F]" strokeWidth={1.7} />
-            </span>
-            <p className="text-[14.5px] font-medium text-[#C7CCD4]">아직 약한 카드가 없어요</p>
-            <p className="text-[13px] text-[#5D636F] leading-snug">복습을 시작하면 자주 틀리는 카드가 모여요</p>
-          </CardContent>
+          {stats.leeches.length > 0 ? (
+            <CardContent className="p-0">
+              {stats.leeches.slice(0, 5).map((leech, i) => (
+                <div
+                  key={leech.cardId}
+                  className={`flex items-center gap-3 px-4 py-[13px] ${
+                    i < Math.min(stats.leeches.length, 5) - 1 ? 'border-b border-white/[0.06]' : ''
+                  }`}
+                >
+                  <Flame size={16} className="text-[#CD746C] shrink-0" strokeWidth={1.8} />
+                  <span className="text-[14px] text-[#C7CCD4] flex-1 leading-snug line-clamp-2">{leech.question}</span>
+                  <span className="font-num text-[12px] text-[#CD746C] shrink-0">
+                    {leech.againCount}회 모름
+                  </span>
+                </div>
+              ))}
+            </CardContent>
+          ) : (
+            <CardContent className="p-6 flex flex-col items-center text-center gap-1.5">
+              <span className="w-[38px] h-[38px] rounded-[11px] bg-[#181B21] border border-white/[0.07] flex items-center justify-center mb-1.5">
+                <Flame size={19} className="text-[#5D636F]" strokeWidth={1.7} />
+              </span>
+              <p className="text-[14.5px] font-medium text-[#C7CCD4]">아직 약한 카드가 없어요</p>
+              <p className="text-[13px] text-[#5D636F] leading-snug">복습을 시작하면 자주 틀리는 카드가 모여요</p>
+            </CardContent>
+          )}
         </Card>
       </div>
     </PageLayout>

@@ -6,7 +6,11 @@ import {
   summarizeReviews,
   buildHeatmap,
   buildDailyVolume,
+  tierAccuracy,
+  findLeeches,
   type ReviewSummary,
+  type TierStat,
+  type Leech,
 } from './stats';
 
 /** 카드 출처: 번들 데모 vs 사용자가 임포트한 Obsidian vault */
@@ -278,18 +282,28 @@ export interface ReviewStats {
   summary: ReviewSummary; // 총 복습 수 + 정답률
   heatmap: number[]; // 20주 × 7일 = 140 셀 (column-major)
   daily: number[]; // 최근 30일 일별 복습량
+  tierStats: TierStat[]; // 티어별 정답률 (F/M/D 순)
 }
 
-/** Stats 화면용 집계 — reviewLog를 한 번 읽어 히트맵·바차트·총계를 모두 계산 */
+/** Stats 화면용 집계 — reviewLog·cards를 한 번 읽어 히트맵·바차트·총계·티어 정답률을 계산 */
 export async function getReviewStats(): Promise<ReviewStats> {
   const db = await getDB();
-  const logs = await db.getAll('reviewLog');
+  const [logs, cards] = await Promise.all([db.getAll('reviewLog'), db.getAll('cards')]);
   const now = new Date();
+  const tierByCard = new Map(cards.map((c) => [c.id, c.tier]));
   return {
     summary: summarizeReviews(logs),
     heatmap: buildHeatmap(logs, now, 20),
     daily: buildDailyVolume(logs, now, 30),
+    tierStats: tierAccuracy(logs, tierByCard),
   };
+}
+
+/** 약한 카드(Leech) — Again이 누적된 카드를 reviewLog·cards에서 집계 */
+export async function getLeeches(threshold = 3): Promise<Leech[]> {
+  const db = await getDB();
+  const [logs, cards] = await Promise.all([db.getAll('reviewLog'), db.getAll('cards')]);
+  return findLeeches(logs, cards, threshold);
 }
 
 export async function getAllCardsByDeck(): Promise<Map<string, Card[]>> {

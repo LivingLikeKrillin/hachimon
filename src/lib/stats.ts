@@ -1,9 +1,24 @@
-import type { ReviewLog } from '@/types';
+import type { ReviewLog, Card, Tier } from '@/types';
 
 export interface ReviewSummary {
   total: number;
   accuracy: number; // 0..1 — 정답(Good/Easy, quality>=4) 비율
 }
+
+export interface TierStat {
+  tier: Tier;
+  total: number; // 해당 티어 카드의 복습 횟수
+  accuracy: number; // 0..1
+}
+
+export interface Leech {
+  cardId: string;
+  question: string;
+  tier: Tier;
+  againCount: number; // Again(quality 0) 누적 횟수
+}
+
+const TIER_ORDER: Tier[] = ['foundation', 'mechanism', 'diagnosis'];
 
 /** 로컬 캘린더 날짜 키 (YYYY-MM-DD) */
 function dayKey(d: Date): string {
@@ -68,4 +83,47 @@ export function buildDailyVolume(logs: ReviewLog[], now: Date, days = 30): numbe
     out.push(counts.get(dayKey(d)) ?? 0);
   }
   return out;
+}
+
+/**
+ * 티어별 정답률 — foundation/mechanism/diagnosis 순으로 항상 3개 반환.
+ * 복습 기록이 없는 티어는 total 0, accuracy 0.
+ */
+export function tierAccuracy(logs: ReviewLog[], tierByCard: Map<string, Tier>): TierStat[] {
+  const agg = new Map<Tier, { total: number; correct: number }>(
+    TIER_ORDER.map((t) => [t, { total: 0, correct: 0 }]),
+  );
+  for (const log of logs) {
+    const tier = tierByCard.get(log.cardId);
+    if (!tier) continue;
+    const e = agg.get(tier)!;
+    e.total++;
+    if (log.quality >= 4) e.correct++;
+  }
+  return TIER_ORDER.map((tier) => {
+    const { total, correct } = agg.get(tier)!;
+    return { tier, total, accuracy: total > 0 ? correct / total : 0 };
+  });
+}
+
+/**
+ * 약한 카드(Leech) — Again(quality 0)이 `threshold`회 이상 누적된 카드.
+ * againCount 내림차순 정렬.
+ */
+export function findLeeches(logs: ReviewLog[], cards: Card[], threshold = 3): Leech[] {
+  const cardById = new Map(cards.map((c) => [c.id, c]));
+  const againByCard = new Map<string, number>();
+  for (const log of logs) {
+    if (log.quality === 0) {
+      againByCard.set(log.cardId, (againByCard.get(log.cardId) ?? 0) + 1);
+    }
+  }
+  const out: Leech[] = [];
+  for (const [cardId, againCount] of againByCard) {
+    if (againCount < threshold) continue;
+    const c = cardById.get(cardId);
+    if (!c) continue;
+    out.push({ cardId, question: c.question, tier: c.tier, againCount });
+  }
+  return out.sort((a, b) => b.againCount - a.againCount);
 }

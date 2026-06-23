@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import Markdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
@@ -7,6 +8,7 @@ import SectionLabel from '@/components/shared/SectionLabel';
 import ScreenContainer from '@/components/layout/ScreenContainer';
 import { useReviewSession } from '@/hooks/useReviewSession';
 import type { SessionSummary } from '@/hooks/useReviewSession';
+import { resolveSwipe } from '@/lib/gesture';
 
 const RATING: { quality: Quality; label: string; bg: string; border: string; text: string; sub: string }[] = [
   { quality: 0, label: '모름', bg: 'rgba(205,116,108,0.13)', border: 'rgba(205,116,108,0.30)', text: '#DD8C85', sub: '#7E5450' },
@@ -24,6 +26,30 @@ interface ReviewSessionProps {
 export default function ReviewSession({ cards, onComplete, onExit }: ReviewSessionProps) {
   const { currentCard, currentIndex, totalCards, progress, flipped, finished, flip, rate, getSummary, getNextInterval } =
     useReviewSession(cards);
+
+  // 스와이프: 답변 공개(flipped) 상태에서 좌→모름(0), 우→쉬움(5)
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const [dragX, setDragX] = useState(0);
+  const swipeHint = flipped && Math.abs(dragX) >= 60 ? (dragX > 0 ? 'right' : 'left') : null;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (!flipped) return;
+    const t = e.touches[0];
+    touchStart.current = { x: t.clientX, y: t.clientY };
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!flipped || !touchStart.current) return;
+    setDragX(e.touches[0].clientX - touchStart.current.x);
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (!flipped || !touchStart.current) return;
+    const t = e.changedTouches[0];
+    const dir = resolveSwipe(t.clientX - touchStart.current.x, t.clientY - touchStart.current.y);
+    touchStart.current = null;
+    setDragX(0);
+    if (dir === 'left') rate(0);
+    else if (dir === 'right') rate(5);
+  };
 
   if (finished) {
     onComplete(getSummary());
@@ -66,10 +92,33 @@ export default function ReviewSession({ cards, onComplete, onExit }: ReviewSessi
       <div className="flex-1 px-[22px] pb-4">
         <div
           onClick={!flipped ? flip : undefined}
-          className={`h-full rounded-[20px] bg-[#15171D] border border-white/[0.07] p-[22px] flex flex-col shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_8px_30px_-12px_rgba(0,0,0,0.5)] ${
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          style={{
+            transform: dragX ? `translateX(${dragX}px) rotate(${dragX * 0.018}deg)` : undefined,
+            transition: dragX ? 'none' : 'transform 0.22s ease',
+            borderColor:
+              swipeHint === 'left'
+                ? 'rgba(205,116,108,0.5)'
+                : swipeHint === 'right'
+                  ? 'rgba(95,168,138,0.5)'
+                  : undefined,
+          }}
+          className={`relative h-full rounded-[20px] bg-[#15171D] border border-white/[0.07] p-[22px] flex flex-col shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_8px_30px_-12px_rgba(0,0,0,0.5)] ${
             !flipped ? 'cursor-pointer active:scale-[0.99] transition-transform' : ''
           }`}
         >
+          {swipeHint === 'left' && (
+            <span className="absolute top-4 right-4 px-2.5 py-1 rounded-full text-[12px] font-semibold bg-[rgba(205,116,108,0.18)] text-[#DD8C85] border border-[rgba(205,116,108,0.4)]">
+              모름
+            </span>
+          )}
+          {swipeHint === 'right' && (
+            <span className="absolute top-4 left-4 px-2.5 py-1 rounded-full text-[12px] font-semibold bg-[rgba(95,168,138,0.18)] text-[#6FBE9C] border border-[rgba(95,168,138,0.4)]">
+              쉬움
+            </span>
+          )}
           <div className="mb-5"><TierBadge tier={currentCard.tier} full /></div>
 
           <SectionLabel tight upper>질문</SectionLabel>
