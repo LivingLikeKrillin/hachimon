@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import PageLayout from '@/components/layout/PageLayout';
 import SectionLabel from '@/components/shared/SectionLabel';
 import StatRow from '@/components/shared/StatRow';
+import { TIER_COLORS } from '@/lib/tokens';
 
 // Stable mock data via useMemo
 function useHeatmapData() {
@@ -30,9 +31,9 @@ const dailyData = [18,25,12,30,8,22,35,15,28,10,32,20,14,38,16,24,9,33,19,27,11,
 const maxDaily = Math.max(...dailyData);
 
 const tierAccuracy = [
-  { tier: 'Foundation', label: '기초', color: '#60a5fa', pct: 89 },
-  { tier: 'Mechanism', label: '원리', color: '#fbbf24', pct: 74 },
-  { tier: 'Diagnosis', label: '진단', color: '#f87171', pct: 58 },
+  { tier: 'Foundation', label: '기초', color: TIER_COLORS.foundation, pct: 89 },
+  { tier: 'Mechanism', label: '원리', color: TIER_COLORS.mechanism, pct: 74 },
+  { tier: 'Diagnosis', label: '진단', color: TIER_COLORS.diagnosis, pct: 58 },
 ];
 
 export default function Stats() {

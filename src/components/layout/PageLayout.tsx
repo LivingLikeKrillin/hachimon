@@ -1,10 +1,12 @@
+import ScreenContainer from '@/components/layout/ScreenContainer';
+
 interface PageLayoutProps {
   children: React.ReactNode;
 }
 
 export default function PageLayout({ children }: PageLayoutProps) {
   return (
-    <div className="w-full max-w-[393px] mx-auto px-4 pb-24 min-h-svh space-y-4 pt-safe bg-gate-aura">
+    <ScreenContainer className="px-4 pb-24 space-y-4 bg-gate-aura">
       <header className="flex items-center gap-3.5 pt-3 animate-up">
         <img
           src="/logo.png"
@@ -17,6 +19,6 @@ export default function PageLayout({ children }: PageLayoutProps) {
         </span>
       </header>
       {children}
-    </div>
+    </ScreenContainer>
   );
 }

@@ -3,6 +3,8 @@ import Markdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import type { Quality, Card, Schedule } from '@/types';
 import TierBadge from '@/components/shared/TierBadge';
+import SectionLabel from '@/components/shared/SectionLabel';
+import ScreenContainer from '@/components/layout/ScreenContainer';
 import { useReviewSession } from '@/hooks/useReviewSession';
 import type { SessionSummary } from '@/hooks/useReviewSession';
 
@@ -41,17 +43,17 @@ export default function ReviewSession({ cards, onComplete, onExit }: ReviewSessi
 
   if (!currentCard) {
     return (
-      <div className="w-full max-w-[393px] mx-auto min-h-svh flex items-center justify-center px-4">
+      <ScreenContainer className="flex items-center justify-center px-4">
         <div className="text-center space-y-2">
           <p className="text-[16px] font-semibold text-zinc-300">복습할 카드가 없습니다</p>
           <button onClick={onExit} className="text-[14px] text-blue-400">홈으로 돌아가기</button>
         </div>
-      </div>
+      </ScreenContainer>
     );
   }
 
   return (
-    <div className="w-full max-w-[393px] mx-auto min-h-svh flex flex-col pt-safe">
+    <ScreenContainer className="flex flex-col">
       {/* Header */}
       <div className="px-4 pt-3 pb-2 flex items-center justify-between">
         <button onClick={onExit} className="w-10 h-10 flex items-center justify-center text-zinc-500 active:text-zinc-300">
@@ -77,7 +79,7 @@ export default function ReviewSession({ cards, onComplete, onExit }: ReviewSessi
       <div className="flex-1 px-4 pb-4">
         <div
           onClick={!flipped ? flip : undefined}
-          className={`h-full rounded-2xl border border-zinc-800 bg-zinc-900 p-5 flex flex-col ${
+          className={`h-full rounded-xl bg-card ring-1 ring-foreground/10 p-5 flex flex-col ${
             !flipped ? 'cursor-pointer active:scale-[0.99] transition-transform' : ''
           }`}
         >
@@ -88,7 +90,7 @@ export default function ReviewSession({ cards, onComplete, onExit }: ReviewSessi
 
           {/* Question */}
           <div className="mb-4">
-            <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-2">질문</p>
+            <SectionLabel tight>질문</SectionLabel>
             <p className="text-[16px] text-zinc-100 leading-relaxed font-medium">
               {currentCard.question}
             </p>
@@ -97,8 +99,8 @@ export default function ReviewSession({ cards, onComplete, onExit }: ReviewSessi
           {/* Answer (revealed on flip) */}
           {flipped ? (
             <div className="flex-1 animate-up">
-              <div className="border-t border-zinc-800 pt-4">
-                <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-2">답변</p>
+              <div className="border-t border-zinc-800/60 pt-4">
+                <SectionLabel tight>답변</SectionLabel>
                 <div className="prose-hachimon text-[14px] text-zinc-300 leading-relaxed">
                   <Markdown rehypePlugins={[rehypeHighlight]}>{currentCard.answer}</Markdown>
                 </div>
@@ -130,6 +132,6 @@ export default function ReviewSession({ cards, onComplete, onExit }: ReviewSessi
           </div>
         </div>
       )}
-    </div>
+    </ScreenContainer>
   );
 }

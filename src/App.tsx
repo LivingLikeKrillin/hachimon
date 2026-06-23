@@ -5,6 +5,7 @@ import { useDueCards } from '@/hooks/useDueCards';
 import { getDueCards } from '@/lib/data';
 import type { SessionSummary } from '@/hooks/useReviewSession';
 import TabBar from '@/components/layout/TabBar';
+import ScreenContainer from '@/components/layout/ScreenContainer';
 import Home from '@/pages/Home';
 import Decks from '@/pages/Decks';
 import Stats from '@/pages/Stats';
@@ -69,23 +70,23 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="w-full max-w-[393px] mx-auto min-h-svh flex items-center justify-center">
+      <ScreenContainer className="flex items-center justify-center">
         <div className="text-center space-y-3">
           <img src="/logo.png" alt="Hachimon" className="w-16 h-16 rounded-2xl mx-auto animate-pulse" />
           <p className="text-[14px] text-zinc-400">카드 불러오는 중...</p>
         </div>
-      </div>
+      </ScreenContainer>
     );
   }
 
   if (error) {
     return (
-      <div className="w-full max-w-[393px] mx-auto min-h-svh flex items-center justify-center px-4">
+      <ScreenContainer className="flex items-center justify-center px-4">
         <div className="text-center space-y-2">
           <p className="text-[16px] font-semibold text-red-400">로딩 실패</p>
           <p className="text-[13px] text-zinc-400">{error}</p>
         </div>
-      </div>
+      </ScreenContainer>
     );
   }
 

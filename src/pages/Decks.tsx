@@ -5,15 +5,18 @@ import type { Card as CardType } from '@/types';
 import PageLayout from '@/components/layout/PageLayout';
 import SectionLabel from '@/components/shared/SectionLabel';
 import TierBadge from '@/components/shared/TierBadge';
+import ActionButton from '@/components/shared/ActionButton';
+import { GATE_COLORS } from '@/lib/tokens';
 import { getAllCardsByDeck } from '@/lib/data';
 
-const GATE_COLORS: Record<string, string> = {
-  spring: 'var(--gate-1)',
-  jpa: 'var(--gate-5)',
-  java: 'var(--gate-7)',
-  k8s: 'var(--gate-3)',
-  db: 'var(--gate-6)',
-  aws: 'var(--gate-2)',
+// 그룹별 게이트 색상 (1·5·7·3·6·2문)
+const GROUP_GATES: Record<string, string> = {
+  spring: GATE_COLORS[0],
+  jpa: GATE_COLORS[4],
+  java: GATE_COLORS[6],
+  k8s: GATE_COLORS[2],
+  db: GATE_COLORS[5],
+  aws: GATE_COLORS[1],
 };
 
 interface DeckGroup {
@@ -35,7 +38,7 @@ function buildGroups(cardsByDeck: Map<string, CardType[]>): DeckGroup[] {
       groupMap.set(groupKey, {
         id: groupKey,
         label: groupKey.charAt(0).toUpperCase() + groupKey.slice(1),
-        gate: GATE_COLORS[groupKey] || 'var(--gate-1)',
+        gate: GROUP_GATES[groupKey] || GATE_COLORS[0],
         decks: [],
       });
     }
@@ -100,7 +103,7 @@ export default function Decks() {
                 <button
                   onClick={() => toggle(group.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3 transition-colors hover:bg-zinc-800/30 ${
-                    gi > 0 ? 'border-t border-zinc-800/50' : ''
+                    gi > 0 ? 'border-t border-zinc-800/60' : ''
                   }`}
                 >
                   <span className="w-1.5 h-6 rounded-full" style={{ background: group.gate }} />
@@ -121,7 +124,7 @@ export default function Decks() {
                       <button
                         key={deck.id}
                         onClick={() => setSelectedDeck({ group, deck })}
-                        className="w-full flex items-center gap-3 pl-10 pr-4 py-2.5 transition-colors hover:bg-zinc-800/30 border-t border-zinc-800/30"
+                        className="w-full flex items-center gap-3 pl-10 pr-4 py-2.5 transition-colors hover:bg-zinc-800/30 border-t border-zinc-800/60"
                       >
                         <CreditCard size={14} className="text-zinc-600" />
                         <span className="text-[13px] text-zinc-300 flex-1 text-left">{deck.name}</span>
@@ -144,7 +147,7 @@ export default function Decks() {
         >
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-[393px] max-h-[80svh] overflow-y-auto bg-zinc-900 rounded-t-2xl p-5 space-y-4 animate-sheet border-t border-zinc-700/30"
+            className="relative w-full max-w-[393px] max-h-[80svh] overflow-y-auto bg-zinc-900 rounded-t-2xl p-5 space-y-4 animate-sheet border-t border-zinc-800/60"
             style={{ boxShadow: '0 -8px 40px rgba(0, 0, 0, 0.4)' }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -173,20 +176,17 @@ export default function Decks() {
             </div>
 
             <div className="space-y-2">
-              <p className="text-[11px] text-zinc-500 uppercase tracking-wider">미리보기</p>
+              <SectionLabel tight>미리보기</SectionLabel>
               {selectedDeck.deck.cards.slice(0, 2).map((card) => (
-                <div key={card.id} className="p-3 rounded-lg bg-zinc-800/60 border border-zinc-700/40">
+                <div key={card.id} className="p-3 rounded-lg bg-zinc-800/60 border border-zinc-800/60">
                   <p className="text-[13px] text-zinc-300">{card.question}</p>
                 </div>
               ))}
             </div>
 
-            <button
-              onClick={() => setSelectedDeck(null)}
-              className="w-full h-11 rounded-xl bg-zinc-800 text-[14px] font-medium text-zinc-300 active:scale-[0.97] transition-transform"
-            >
+            <ActionButton variant="secondary" onClick={() => setSelectedDeck(null)}>
               닫기
-            </button>
+            </ActionButton>
           </div>
         </div>
       )}

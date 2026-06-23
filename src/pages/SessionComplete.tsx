@@ -2,6 +2,9 @@ import { CheckCircle, RotateCcw, Home, Clock, Target } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import SectionLabel from '@/components/shared/SectionLabel';
 import TierBadge from '@/components/shared/TierBadge';
+import ActionButton from '@/components/shared/ActionButton';
+import ScreenContainer from '@/components/layout/ScreenContainer';
+import { accuracyColor } from '@/lib/tokens';
 import type { SessionSummary } from '@/hooks/useReviewSession';
 
 function formatDuration(seconds: number): string {
@@ -20,11 +23,10 @@ interface SessionCompleteProps {
 export default function SessionComplete({ summary, onRetry, onHome }: SessionCompleteProps) {
   const { accuracy, totalCards, correctCount, duration, tierBreakdown, wrongCards } = summary;
 
-  const accuracyColor = accuracy >= 80 ? 'text-emerald-400' : accuracy >= 60 ? 'text-amber-400' : 'text-red-400';
-  const ringColor = accuracy >= 80 ? '#34d399' : accuracy >= 60 ? '#fbbf24' : '#f87171';
+  const acc = accuracyColor(accuracy);
 
   return (
-    <div className="w-full max-w-[393px] mx-auto min-h-svh px-4 pb-24 pt-safe">
+    <ScreenContainer className="px-4 pb-24">
       {/* Result header */}
       <div className="text-center pt-8 pb-6 animate-up">
         {/* Accuracy ring */}
@@ -33,7 +35,7 @@ export default function SessionComplete({ summary, onRetry, onHome }: SessionCom
             <circle cx="50" cy="50" r="42" fill="none" stroke="#27272a" strokeWidth="8" />
             <circle
               cx="50" cy="50" r="42" fill="none"
-              stroke={ringColor}
+              stroke={acc.hex}
               strokeWidth="8"
               strokeLinecap="round"
               strokeDasharray={`${accuracy * 2.64} ${264 - accuracy * 2.64}`}
@@ -41,14 +43,14 @@ export default function SessionComplete({ summary, onRetry, onHome }: SessionCom
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className={`font-display text-[28px] font-bold ${accuracyColor}`}>
+            <span className={`font-display text-[28px] font-bold ${acc.text}`}>
               {accuracy}%
             </span>
           </div>
         </div>
 
         <div className="flex items-center justify-center gap-2 mb-1">
-          <CheckCircle size={18} className={accuracyColor} />
+          <CheckCircle size={18} className={acc.text} />
           <p className="text-[18px] font-semibold text-zinc-100">세션 완료</p>
         </div>
         <p className="text-[13px] text-zinc-500">
@@ -59,7 +61,7 @@ export default function SessionComplete({ summary, onRetry, onHome }: SessionCom
       {/* Quick stats */}
       <Card className="animate-up stagger-1">
         <CardContent className="p-4">
-          <div className="grid grid-cols-3 divide-x divide-zinc-800/50">
+          <div className="grid grid-cols-3 divide-x divide-zinc-800/60">
             <div className="text-center px-2">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <Target size={14} className="text-zinc-500" />
@@ -100,9 +102,7 @@ export default function SessionComplete({ summary, onRetry, onHome }: SessionCom
                     <span className="text-[12px] text-zinc-500">
                       {t.correct}/{t.total}
                     </span>
-                    <span className={`font-display text-[14px] font-bold tabular-nums ${
-                      t.accuracy >= 80 ? 'text-emerald-400' : t.accuracy >= 60 ? 'text-amber-400' : 'text-red-400'
-                    }`}>
+                    <span className={`font-display text-[14px] font-bold tabular-nums ${accuracyColor(t.accuracy).text}`}>
                       {t.accuracy}%
                     </span>
                   </div>
@@ -122,7 +122,7 @@ export default function SessionComplete({ summary, onRetry, onHome }: SessionCom
               {wrongCards.map((card, i) => (
                 <div
                   key={card.cardId}
-                  className={`px-4 py-3 ${i < wrongCards.length - 1 ? 'border-b border-zinc-800/50' : ''}`}
+                  className={`px-4 py-3 ${i < wrongCards.length - 1 ? 'border-b border-zinc-800/60' : ''}`}
                 >
                   <div className="flex items-start gap-2">
                     <TierBadge tier={card.tier} />
@@ -138,22 +138,14 @@ export default function SessionComplete({ summary, onRetry, onHome }: SessionCom
       {/* Action buttons */}
       <div className="mt-6 space-y-2.5 animate-up stagger-4">
         {wrongCards.length > 0 && (
-          <button
-            onClick={onRetry}
-            className="w-full h-[48px] rounded-xl text-[15px] font-semibold flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-600 to-amber-500 text-white transition-all duration-150 active:scale-[0.96]"
-          >
-            <RotateCcw size={18} />
+          <ActionButton variant="warning" icon={<RotateCcw size={18} />} onClick={onRetry}>
             틀린 카드 재복습 ({wrongCards.length}장)
-          </button>
+          </ActionButton>
         )}
-        <button
-          onClick={onHome}
-          className="w-full h-[48px] rounded-xl text-[15px] font-semibold flex items-center justify-center gap-2.5 bg-zinc-900 border border-zinc-800 text-zinc-200 transition-all duration-150 active:scale-[0.96] active:bg-zinc-800"
-        >
-          <Home size={18} />
+        <ActionButton variant="secondary" icon={<Home size={18} />} onClick={onHome}>
           홈으로
-        </button>
+        </ActionButton>
       </div>
-    </div>
+    </ScreenContainer>
   );
 }

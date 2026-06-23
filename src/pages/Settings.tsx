@@ -60,9 +60,9 @@ export default function Settings() {
         <Card>
           <CardContent className="p-5 space-y-6">
             <SliderSetting label="일일 신규 카드" value={settings.dailyNew} min={0} max={30} unit="장" color="#60a5fa" onChange={(v) => update({ dailyNew: v })} />
-            <div className="border-t border-zinc-800/50" />
+            <div className="border-t border-zinc-800/60" />
             <SliderSetting label="일일 복습 상한" value={settings.dailyReview} min={10} max={200} unit="장" color="#34d399" onChange={(v) => update({ dailyReview: v })} />
-            <div className="border-t border-zinc-800/50" />
+            <div className="border-t border-zinc-800/60" />
             <SliderSetting label="세션당 카드 수" value={settings.sessionSize} min={5} max={30} unit="장" color="#fbbf24" onChange={(v) => update({ sessionSize: v })} />
           </CardContent>
         </Card>
@@ -82,7 +82,7 @@ export default function Settings() {
               color="#a78bfa"
               onChange={(v) => update({ initialEF: v })}
             />
-            <div className="border-t border-zinc-800/50" />
+            <div className="border-t border-zinc-800/60" />
             <SliderSetting
               label="최소 Ease Factor"
               value={settings.minEF}
@@ -115,7 +115,7 @@ export default function Settings() {
             <button
               key={preset.name}
               onClick={() => update(preset.values)}
-              className="p-4 rounded-xl bg-zinc-900 border border-zinc-800 text-left transition-all hover:border-zinc-600 active:scale-[0.97]"
+              className="p-4 rounded-xl bg-zinc-900 border border-zinc-800/60 text-left transition-all hover:border-zinc-600 active:scale-[0.97]"
             >
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-[16px]">{preset.icon}</span>
@@ -131,7 +131,7 @@ export default function Settings() {
       <div className="animate-up stagger-3">
         <SectionLabel>데이터 관리</SectionLabel>
         <div className="space-y-2">
-          <button className="w-full flex items-center gap-3 px-4 py-4 rounded-xl bg-zinc-900 border border-zinc-800 transition-colors hover:bg-zinc-800/60 active:scale-[0.97]">
+          <button className="w-full flex items-center gap-3 px-4 py-4 rounded-xl bg-zinc-900 border border-zinc-800/60 transition-colors hover:bg-zinc-800/60 active:scale-[0.97]">
             <Download size={18} className="text-zinc-300" />
             <div className="text-left">
               <p className="text-[14px] font-medium">데이터 내보내기</p>

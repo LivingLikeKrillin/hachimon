@@ -5,10 +5,13 @@ import PageLayout from '@/components/layout/PageLayout';
 import SectionLabel from '@/components/shared/SectionLabel';
 import StatRow from '@/components/shared/StatRow';
 import ProgressBar from '@/components/shared/ProgressBar';
+import ActionButton from '@/components/shared/ActionButton';
+import { GATE_COLORS } from '@/lib/tokens';
 import { useHomeStats } from '@/hooks/useDueCards';
 import { useSettings } from '@/hooks/useSettings';
 
-const GATE_COLORS = ['var(--gate-1)', 'var(--gate-5)', 'var(--gate-7)', 'var(--gate-3)', 'var(--gate-6)'];
+// Home 덱 강조용 게이트 색상 순서 (1·5·7·3·6문)
+const DECK_GATES = [GATE_COLORS[0], GATE_COLORS[4], GATE_COLORS[6], GATE_COLORS[2], GATE_COLORS[5]];
 
 interface HomeProps {
   onNavigate: (screen: Screen) => void;
@@ -51,21 +54,16 @@ export default function Home({ onNavigate, onStartDeckReview }: HomeProps) {
 
       {/* Action buttons */}
       <div className="space-y-2.5 animate-up stagger-3">
-        <button
-          onClick={() => onNavigate('review')}
-          className="w-full h-[52px] rounded-xl text-[15px] font-semibold flex items-center justify-center gap-2.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white transition-all duration-150 active:scale-[0.96] active:from-blue-700 active:to-blue-600 active:shadow-none"
-          style={{ boxShadow: '0 2px 12px rgba(37, 99, 235, 0.15)' }}
-        >
-          <Sparkles size={18} />
+        <ActionButton variant="primary" icon={<Sparkles size={18} />} onClick={() => onNavigate('review')}>
           오늘의 복습 시작
-        </button>
-        <button
+        </ActionButton>
+        <ActionButton
+          variant="secondary"
+          icon={<Flame size={18} className="text-amber-500" />}
           onClick={() => onNavigate('interview')}
-          className="w-full h-[52px] rounded-xl text-[15px] font-semibold flex items-center justify-center gap-2.5 bg-zinc-900 border border-zinc-800 text-zinc-200 transition-all duration-150 active:scale-[0.96] active:bg-zinc-800"
         >
-          <Flame size={18} className="text-amber-500" />
           면접 훈련 모드
-        </button>
+        </ActionButton>
       </div>
 
       {/* Due decks */}
@@ -79,18 +77,18 @@ export default function Home({ onNavigate, onStartDeckReview }: HomeProps) {
                   key={deck.deckId}
                   onClick={() => onStartDeckReview?.(deck.deckId)}
                   className={`flex justify-between items-center px-4 py-3.5 group cursor-pointer transition-colors hover:bg-zinc-800/30 active:bg-zinc-800/50 ${
-                    i < stats.dueByDeck.length - 1 ? 'border-b border-zinc-800/50' : ''
+                    i < stats.dueByDeck.length - 1 ? 'border-b border-zinc-800/60' : ''
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <span
                       className="w-1 h-6 rounded-full"
-                      style={{ background: GATE_COLORS[i % GATE_COLORS.length] }}
+                      style={{ background: DECK_GATES[i % DECK_GATES.length] }}
                     />
                     <span className="text-[14px] text-zinc-200">{deck.name}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="font-display text-[14px] font-semibold tabular-nums" style={{ color: GATE_COLORS[i % GATE_COLORS.length] }}>
+                    <span className="font-display text-[14px] font-semibold tabular-nums" style={{ color: DECK_GATES[i % DECK_GATES.length] }}>
                       {deck.count}
                     </span>
                     <ChevronRight size={14} className="text-zinc-600 group-hover:text-zinc-400 transition-colors" />
