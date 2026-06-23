@@ -139,7 +139,8 @@ migrateToFsrs(now?: Date): Promise<void>
 - **"목표 기억 유지율"** 슬라이더 추가: 범위 0.80~0.97, 기본 0.90, 1% 단위. 표시는 백분율(`90%`).
 - `useSettings`의 설정 객체: `initialEF`, `minEF` 제거 → `requestRetention: number` 추가.
 - 최대 간격은 노출하지 않고 기본값(36500일) 고정 (YAGNI).
-- settings 기본값 마이그레이션: 기존 사용자에 `requestRetention`이 없으면 0.90으로 초기화.
+- settings 기본값 마이그레이션: `useSettings`의 기존 `{ ...DEFAULTS, ...stored }` 머지가 `requestRetention` 누락을 자동 backfill 한다. 별도 마이그레이션 코드 불필요.
+- 저장된 `appSettings` blob에 남는 기존 `initialEF`/`minEF` 키는 인터페이스에서 제거 후 그냥 무시한다(무해). 정리용 마이그레이션을 추가하지 않는다 (YAGNI).
 
 ## 통계 / 마스터 정의 (`src/lib/data.ts`)
 
@@ -170,7 +171,7 @@ const weakness = (c: Card): number => {
 ## 백업 (`src/lib/backup.ts`)
 
 - `buildExport`는 schedules를 그대로 직렬화하므로 새 Schedule 형태가 자동 반영됨.
-- export payload의 스키마 버전 문자열을 갱신(예: `schedulerVersion: 'fsrs'` 또는 export version bump)하여 SM-2 시절 백업과 구분 가능하게 함.
+- 스키마가 실제로 바뀌므로 `backup.ts`의 `EXPORT_VERSION`을 `1 → 2`로 bump하여 SM-2 시절 백업과 구분한다.
 
 ## 새 카드 감지 (`src/lib/newcards.ts`)
 
