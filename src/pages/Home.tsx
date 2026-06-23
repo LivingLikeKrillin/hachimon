@@ -61,9 +61,9 @@ export default function Home({ onNavigate, onStartDeckReview }: HomeProps) {
         <ActionButton
           variant="secondary"
           icon={<Flame size={18} className="text-amber-500" />}
-          onClick={() => onNavigate('interview')}
+          onClick={() => onNavigate('forge')}
         >
-          면접 훈련 모드
+          단련
         </ActionButton>
       </div>
 

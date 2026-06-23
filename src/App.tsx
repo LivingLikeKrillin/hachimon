@@ -10,7 +10,7 @@ import Decks from '@/pages/Decks';
 import Stats from '@/pages/Stats';
 import Settings from '@/pages/Settings';
 import ReviewSession from '@/pages/ReviewSession';
-import InterviewFilter from '@/pages/InterviewFilter';
+import Forge from '@/pages/Forge';
 import SessionComplete from '@/pages/SessionComplete';
 
 export default function App() {
@@ -109,8 +109,8 @@ export default function App() {
     );
   }
 
-  if (screen === 'interview') {
-    return <InterviewFilter />;
+  if (screen === 'forge') {
+    return <Forge />;
   }
 
   const pages: Record<Tab, React.ReactNode> = {
