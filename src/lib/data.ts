@@ -13,6 +13,8 @@ import {
   type Leech,
 } from './stats';
 import { countIntroducedToday, selectNewCards } from './newcards';
+import { buildExport, type BackupData } from './backup';
+import { createInitialSchedule } from './sm2';
 
 const DEFAULT_DAILY_NEW = 10;
 
@@ -190,6 +192,34 @@ export async function getDueByDeck(): Promise<{ deckId: string; name: string; co
     }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 3);
+}
+
+/** 학습 기록 백업 객체 — 스케줄·복습 로그·설정을 모아 반환 */
+export async function exportLearningData(): Promise<BackupData> {
+  const db = await getDB();
+  const [schedules, reviewLog, settings] = await Promise.all([
+    db.getAll('schedules'),
+    db.getAll('reviewLog'),
+    db.getAll('settings'),
+  ]);
+  return buildExport(schedules, reviewLog, settings, new Date().toISOString());
+}
+
+/**
+ * 학습 기록 초기화 — 복습 로그를 전부 지우고 모든 카드의 스케줄을 초기 상태로
+ * 되돌린다 (카드 자체는 유지). 이후 모든 카드가 다시 '새 카드'가 된다.
+ */
+export async function resetLearningData(): Promise<void> {
+  const db = await getDB();
+  const cards = await db.getAll('cards');
+  const tx = db.transaction(['schedules', 'reviewLog'], 'readwrite');
+  await tx.objectStore('reviewLog').clear();
+  const schedStore = tx.objectStore('schedules');
+  await schedStore.clear();
+  for (const c of cards) {
+    await schedStore.put(createInitialSchedule(c.id));
+  }
+  await tx.done;
 }
 
 export async function getSetting<T>(key: string, defaultValue: T): Promise<T> {
