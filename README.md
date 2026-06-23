@@ -39,7 +39,7 @@ Obsidian Vault (.md)
 | 범용 카드 | 개발자 면접 특화 (코드 하이라이팅) |
 | 단일 난이도 | 3-Tier (Foundation → Mechanism → Diagnosis) |
 | 수동 카드 생성 | Obsidian Vault에서 자동 파싱 |
-| 단일 복습 모드 | 오늘의 복습 + 면접 훈련 + 새 카드 학습 |
+| 단일 복습 모드 | 오늘의 복습 + 단련 + 새 카드 학습 |
 
 ---
 
@@ -87,7 +87,7 @@ Obsidian Vault (.md)
 ### 3가지 복습 모드
 
 - **오늘의 복습** — SM-2 due 카드 15장 자동 선택. overdue 우선, 원탭 시작.
-- **면접 훈련** — 덱 트리 + 티어 필터 + 세션 크기 조절. 맞춤형 복습.
+- **단련(鍛鍊)** — 덱 트리 + 티어 필터 + 세션 크기 조절. 약점을 거듭 벼리는 맞춤 훈련.
 - **새 카드 학습** — Foundation → Mechanism → Diagnosis 순차 노출.
 
 ### 3-Tier 난이도 체계
@@ -152,7 +152,7 @@ Gate 8 (Death)    → #e11d48  Crimson
 
 | 탭 | 내용 |
 |----|------|
-| 홈 | 3칸 요약 (복습/연속일수/전체), 오늘의 목표 진행률, 복습·면접 버튼, 복습 대기 Top 3, 약한 카드 |
+| 홈 | 3칸 요약 (복습/연속일수/전체), 오늘의 목표 진행률, 복습·단련 버튼, 복습 대기 Top 3, 약한 카드 |
 | 덱 | 6개 그룹 덱 트리 (접기/펼치기), 탭 → 덱 상세 바텀시트 (티어 뱃지 + 카드 미리보기) |
 | 통계 | 총 복습/마스터/정답률, 20주 복습 히트맵, 30일 바 차트 (3색 그라데이션), 티어별 정답률 |
 | 설정 | 세션 설정 슬라이더 3종, SM-2 파라미터, 프리셋 4종, 데이터 관리 (내보내기/초기화) |
@@ -161,13 +161,25 @@ Gate 8 (Death)    → #e11d48  Crimson
 
 | 화면 | 진입 | 내용 |
 |------|------|------|
-| InterviewFilter | 홈 → "면접 훈련 모드" | 덱 선택(다중) + 티어 칩 + 세션 크기 + 시작 |
-| ReviewSession | 홈 → "오늘의 복습 시작" 또는 InterviewFilter | 프로그레스 바 + 질문→답변 + 4단계 평가 |
+| Forge | 홈 → "단련" | 덱 선택(다중) + 티어 칩 + 세션 크기 + 시작 |
+| ReviewSession | 홈 → "오늘의 복습 시작" 또는 Forge | 프로그레스 바 + 질문→답변 + 4단계 평가 |
 | SessionComplete | ReviewSession 완료 | 정답률, 소요시간, 티어별 결과, 재복습/홈 |
 
 ---
 
+## 내 Obsidian 연동하기
+
+개별 사용자는 **앱 안에서 직접** 본인 Obsidian Vault를 가져올 수 있습니다 (CLI·배포 불필요). 앱이 `.md`를 브라우저에서 파싱해 IndexedDB에 저장하며, 노트는 어디로도 업로드되지 않습니다.
+
+> 설정 탭 → **데이터 소스 → Obsidian Vault 가져오기**
+
+자세한 노트 작성 포맷·설치·갱신 방법은 **[Obsidian 연동 가이드](docs/obsidian-guide.md)** 를 참고하세요. 인앱 파서 구현은 `src/lib/obsidian.ts` (유닛 테스트: `src/lib/obsidian.test.ts`).
+
+---
+
 ## CLI Parser
+
+> 대량 볼트를 빌드 타임에 `cards.json`으로 굽고 싶을 때를 위한 옵션입니다 (계획됨). 일반 사용자는 위의 **인앱 가져오기**로 충분합니다.
 
 Kotlin CLI로 Obsidian 볼트를 파싱하여 `cards.json`을 생성합니다.
 
@@ -200,7 +212,7 @@ hachimon/
 │   │   ├── Stats.tsx           # 히트맵 + 차트 + 정답률
 │   │   ├── Settings.tsx        # 슬라이더 + 프리셋 + 데이터 관리
 │   │   ├── ReviewSession.tsx   # 복습 세션
-│   │   ├── InterviewFilter.tsx # 면접 훈련 필터
+│   │   ├── Forge.tsx           # 단련 설정
 │   │   └── SessionComplete.tsx # 세션 결과
 │   ├── lib/
 │   │   ├── sm2.ts              # SM-2 알고리즘
@@ -291,7 +303,7 @@ v0.1 (MVP)
   └ CLI → cards.json → PWA 복습 세션 → Cloudflare 배포
 
 v0.2
-  ├ 면접 훈련 모드
+  ├ 단련 모드
   ├ Home/세션완료 화면
   ├ 마크다운 렌더링
   └ 코드 하이라이팅

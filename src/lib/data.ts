@@ -1,11 +1,62 @@
-import type { Card, Schedule, CardsData } from '@/types';
+import type { Card, Schedule, CardsData, Tier } from '@/types';
 import { getDB } from './db';
 import { mergeCards } from './merge';
+import { parseVault, type VaultFile } from './obsidian';
+
+/** 카드 출처: 번들 데모 vs 사용자가 임포트한 Obsidian vault */
+export type CardSource = 'demo' | 'vault';
+
+export interface VaultMeta {
+  importedAt: string;
+  fileCount: number;
+  deckCount: number;
+  cardCount: number;
+}
+
+export async function getCardSource(): Promise<CardSource> {
+  return getSetting<CardSource>('cardSource', 'demo');
+}
+
+export async function getVaultMeta(): Promise<VaultMeta | null> {
+  return getSetting<VaultMeta | null>('vaultMeta', null);
+}
 
 export async function initializeCards(): Promise<void> {
+  // vault 모드면 사용자 임포트 카드를 유지한다 (번들 데모를 fetch/merge 하지 않음)
+  if ((await getCardSource()) === 'vault') return;
+
   const res = await fetch('/cards.json');
   const data: CardsData = await res.json();
   await mergeCards(data);
+}
+
+/** 파싱 미리보기 — 사이드이펙트 없음 */
+export function previewVault(files: VaultFile[]): CardsData {
+  return parseVault(files);
+}
+
+/** 미리보기 결과를 실제로 반영: merge + vault 모드 전환 */
+export async function commitVaultImport(data: CardsData): Promise<VaultMeta> {
+  if (data.cards.length === 0) {
+    throw new Error('카드를 찾지 못했습니다. 노트 포맷을 확인하세요.');
+  }
+  await mergeCards(data);
+  const meta: VaultMeta = {
+    importedAt: new Date().toISOString(),
+    fileCount: new Set(data.cards.map((c) => c.sourceFile)).size,
+    deckCount: data.decks.length,
+    cardCount: data.cards.length,
+  };
+  await setSetting<CardSource>('cardSource', 'vault');
+  await setSetting<VaultMeta>('vaultMeta', meta);
+  return meta;
+}
+
+/** 데모 카드로 되돌리기 — vault 임포트분을 비우고 번들 샘플 복원 */
+export async function useDemoCards(): Promise<void> {
+  await setSetting<CardSource>('cardSource', 'demo');
+  await setSetting<VaultMeta | null>('vaultMeta', null);
+  await initializeCards();
 }
 
 export async function getDueCards(limit: number = 15): Promise<(Card & { schedule: Schedule })[]> {
@@ -113,6 +164,108 @@ export async function getSetting<T>(key: string, defaultValue: T): Promise<T> {
 export async function setSetting<T>(key: string, value: T): Promise<void> {
   const db = await getDB();
   await db.put('settings', { key, value: JSON.stringify(value) });
+}
+
+// 마스터 기준 (ROADMAP): EF ≥ 2.5 && repetitions ≥ 5
+const MASTERY_EF = 2.5;
+const MASTERY_REP = 5;
+
+export interface MasteryStats {
+  mastered: number;
+  total: number;
+}
+
+function isMastered(s: Schedule): boolean {
+  return s.easeFactor >= MASTERY_EF && s.repetitions >= MASTERY_REP;
+}
+
+/** 전체 마스터리 — 마스터한 카드 수 / 전체 카드 수 */
+export async function getMasteryStats(): Promise<MasteryStats> {
+  const db = await getDB();
+  const [schedules, total] = await Promise.all([db.getAll('schedules'), db.count('cards')]);
+  return { mastered: schedules.filter(isMastered).length, total };
+}
+
+/** 덱별 마스터리 — deckId → { mastered, total } */
+export async function getDeckMastery(): Promise<Map<string, MasteryStats>> {
+  const db = await getDB();
+  const [cards, schedules] = await Promise.all([db.getAll('cards'), db.getAll('schedules')]);
+  const schedMap = new Map(schedules.map((s) => [s.cardId, s]));
+
+  const out = new Map<string, MasteryStats>();
+  for (const card of cards) {
+    const m = out.get(card.deck) ?? { mastered: 0, total: 0 };
+    m.total++;
+    const s = schedMap.get(card.id);
+    if (s && isMastered(s)) m.mastered++;
+    out.set(card.deck, m);
+  }
+  return out;
+}
+
+/**
+ * 카드 ID 목록으로 카드 + 현재 스케줄을 조회한다 (due 여부 무관).
+ * 재복습("틀린 카드만 다시")처럼 방금 평가해 미래로 밀린 카드를 다시 꺼낼 때 쓴다.
+ */
+export async function getCardsByIds(ids: string[]): Promise<(Card & { schedule: Schedule })[]> {
+  const db = await getDB();
+  const out: (Card & { schedule: Schedule })[] = [];
+  for (const id of ids) {
+    const [card, schedule] = await Promise.all([db.get('cards', id), db.get('schedules', id)]);
+    if (card && schedule) out.push({ ...card, schedule });
+  }
+  return out;
+}
+
+/**
+ * 단련(Forge) 카드 — 선택한 덱/티어에 맞는 카드를 due 여부와 무관하게 뽑되,
+ * **약한 카드부터** 우선 출제한다 (약점을 거듭 벼리는 모드의 정체성).
+ * 약점 = Again/Hard 횟수(reviewLog) + EF 부족 + 미학습. 동점은 살짝 흔든다.
+ */
+export async function getForgeCards(
+  deckIds: Set<string>,
+  tiers: Set<Tier>,
+  limit: number,
+): Promise<(Card & { schedule: Schedule })[]> {
+  const db = await getDB();
+  const [cards, schedules, logs] = await Promise.all([
+    db.getAll('cards'),
+    db.getAll('schedules'),
+    db.getAll('reviewLog'),
+  ]);
+  const schedMap = new Map(schedules.map((s) => [s.cardId, s]));
+
+  // 카드별 stumble 수 (Again/Hard = quality < 3)
+  const stumbles = new Map<string, number>();
+  for (const log of logs) {
+    if (log.quality < 3) stumbles.set(log.cardId, (stumbles.get(log.cardId) || 0) + 1);
+  }
+
+  const weakness = (c: Card): number => {
+    const s = schedMap.get(c.id);
+    const ef = s?.easeFactor ?? 2.5;
+    const rep = s?.repetitions ?? 0;
+    return (
+      (stumbles.get(c.id) || 0) +        // 가장 강한 약점 신호
+      Math.max(0, 2.5 - ef) +            // EF 부족
+      (rep === 0 ? 0.5 : 0) +            // 미학습 보정
+      Math.random() * 0.3               // 동점 흔들기
+    );
+  };
+
+  const matched = cards
+    .filter((c) => deckIds.has(c.deck) && tiers.has(c.tier))
+    .map((c) => ({ c, w: weakness(c) }))
+    .sort((a, b) => b.w - a.w) // 약한 카드부터
+    .slice(0, limit)
+    .map((x) => x.c);
+
+  const out: (Card & { schedule: Schedule })[] = [];
+  for (const c of matched) {
+    const s = schedMap.get(c.id);
+    if (s) out.push({ ...c, schedule: s });
+  }
+  return out;
 }
 
 export async function getAllCardsByDeck(): Promise<Map<string, Card[]>> {

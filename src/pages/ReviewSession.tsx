@@ -3,14 +3,16 @@ import Markdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import type { Quality, Card, Schedule } from '@/types';
 import TierBadge from '@/components/shared/TierBadge';
+import SectionLabel from '@/components/shared/SectionLabel';
+import ScreenContainer from '@/components/layout/ScreenContainer';
 import { useReviewSession } from '@/hooks/useReviewSession';
 import type { SessionSummary } from '@/hooks/useReviewSession';
 
-const RATING_BUTTONS: { quality: Quality; label: string; bg: string; text: string }[] = [
-  { quality: 0, label: '모름', bg: '#7f1d1d', text: '#fca5a5' },
-  { quality: 2, label: '어려움', bg: '#78350f', text: '#fde68a' },
-  { quality: 4, label: '알겠음', bg: '#1e3a5f', text: '#93c5fd' },
-  { quality: 5, label: '쉬움', bg: '#064e3b', text: '#6ee7b7' },
+const RATING: { quality: Quality; label: string; bg: string; border: string; text: string; sub: string }[] = [
+  { quality: 0, label: '모름', bg: 'rgba(205,116,108,0.13)', border: 'rgba(205,116,108,0.30)', text: '#DD8C85', sub: '#7E5450' },
+  { quality: 2, label: '어려움', bg: 'rgba(207,162,78,0.13)', border: 'rgba(207,162,78,0.30)', text: '#DDB868', sub: '#806832' },
+  { quality: 4, label: '알겠음', bg: 'rgba(110,139,201,0.13)', border: 'rgba(110,139,201,0.30)', text: '#93A8DC', sub: '#525F7E' },
+  { quality: 5, label: '쉬움', bg: 'rgba(95,168,138,0.14)', border: 'rgba(95,168,138,0.30)', text: '#6FBE9C', sub: '#43705C' },
 ];
 
 interface ReviewSessionProps {
@@ -20,116 +22,93 @@ interface ReviewSessionProps {
 }
 
 export default function ReviewSession({ cards, onComplete, onExit }: ReviewSessionProps) {
-  const {
-    currentCard,
-    currentIndex,
-    totalCards,
-    progress,
-    flipped,
-    finished,
-    flip,
-    rate,
-    getSummary,
-    getNextInterval,
-  } = useReviewSession(cards);
+  const { currentCard, currentIndex, totalCards, progress, flipped, finished, flip, rate, getSummary, getNextInterval } =
+    useReviewSession(cards);
 
   if (finished) {
-    const summary = getSummary();
-    onComplete(summary);
+    onComplete(getSummary());
     return null;
   }
 
   if (!currentCard) {
     return (
-      <div className="w-full max-w-[393px] mx-auto min-h-svh flex items-center justify-center px-4">
+      <ScreenContainer className="flex items-center justify-center px-5">
         <div className="text-center space-y-2">
-          <p className="text-[16px] font-semibold text-zinc-300">복습할 카드가 없습니다</p>
-          <button onClick={onExit} className="text-[14px] text-blue-400">홈으로 돌아가기</button>
+          <p className="text-[16px] font-semibold text-[#C7CCD4]">복습할 카드가 없습니다</p>
+          <button onClick={onExit} className="text-[14px] text-[#E9A94C]">홈으로 돌아가기</button>
         </div>
-      </div>
+      </ScreenContainer>
     );
   }
 
   return (
-    <div className="w-full max-w-[393px] mx-auto min-h-svh flex flex-col pt-safe">
+    <ScreenContainer className="flex flex-col">
       {/* Header */}
-      <div className="px-4 pt-3 pb-2 flex items-center justify-between">
-        <button onClick={onExit} className="w-10 h-10 flex items-center justify-center text-zinc-500 active:text-zinc-300">
-          <X size={20} />
-        </button>
-        <span className="font-display text-[14px] font-semibold tabular-nums text-zinc-400">
-          {currentIndex + 1} / {totalCards}
-        </span>
-        <div className="w-10" />
-      </div>
-
-      {/* Progress bar */}
-      <div className="px-4 mb-4">
-        <div className="w-full h-1 bg-zinc-800 rounded-full overflow-hidden">
+      <div className="px-[22px] pt-3 pb-3.5">
+        <div className="flex items-center justify-between">
+          <button onClick={onExit} className="w-9 h-9 rounded-[10px] bg-[#181B21] border border-white/[0.08] flex items-center justify-center active:bg-[#1E222A]">
+            <X size={17} className="text-[#969BA6]" strokeWidth={2} />
+          </button>
+          <span className="font-num text-[15px] font-semibold text-[#ECEEF2] tracking-[0.02em]">
+            {currentIndex + 1} <span className="text-[#5D636F]">/ {totalCards}</span>
+          </span>
+          <div className="w-9" />
+        </div>
+        <div className="h-1 rounded-full bg-[#15171D] mt-3.5 overflow-hidden">
           <div
-            className="h-1 rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-300"
-            style={{ width: `${progress * 100}%` }}
+            className="h-full rounded-full bg-gradient-to-r from-[#E09A3C] to-[#F2BC68] shadow-[0_0_8px_rgba(233,169,76,0.6)] transition-[width] duration-300"
+            style={{ width: `${Math.max(progress * 100, 6)}%` }}
           />
         </div>
       </div>
 
       {/* Card area */}
-      <div className="flex-1 px-4 pb-4">
+      <div className="flex-1 px-[22px] pb-4">
         <div
           onClick={!flipped ? flip : undefined}
-          className={`h-full rounded-2xl border border-zinc-800 bg-zinc-900 p-5 flex flex-col ${
+          className={`h-full rounded-[20px] bg-[#15171D] border border-white/[0.07] p-[22px] flex flex-col shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_8px_30px_-12px_rgba(0,0,0,0.5)] ${
             !flipped ? 'cursor-pointer active:scale-[0.99] transition-transform' : ''
           }`}
         >
-          {/* Tier badge */}
-          <div className="mb-4">
-            <TierBadge tier={currentCard.tier} full />
-          </div>
+          <div className="mb-5"><TierBadge tier={currentCard.tier} full /></div>
 
-          {/* Question */}
-          <div className="mb-4">
-            <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-2">질문</p>
-            <p className="text-[16px] text-zinc-100 leading-relaxed font-medium">
-              {currentCard.question}
-            </p>
-          </div>
+          <SectionLabel tight upper>질문</SectionLabel>
+          <p className="text-[21px] font-semibold leading-[1.4] text-[#F4F5F7] tracking-[-0.01em]">{currentCard.question}</p>
 
-          {/* Answer (revealed on flip) */}
           {flipped ? (
             <div className="flex-1 animate-up">
-              <div className="border-t border-zinc-800 pt-4">
-                <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-2">답변</p>
-                <div className="prose-hachimon text-[14px] text-zinc-300 leading-relaxed">
-                  <Markdown rehypePlugins={[rehypeHighlight]}>{currentCard.answer}</Markdown>
-                </div>
+              <div className="h-px bg-white/[0.07] my-5" />
+              <SectionLabel tight upper>답변</SectionLabel>
+              <div className="prose-hachimon text-[15.5px] leading-[1.62] text-[#C7CCD4]">
+                <Markdown rehypePlugins={[rehypeHighlight]}>{currentCard.answer}</Markdown>
               </div>
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center">
-              <p className="text-[13px] text-zinc-600">탭하여 답변 확인</p>
+              <p className="text-[13px] text-[#5D636F]">탭하여 답변 확인</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Rating buttons (visible after flip) */}
+      {/* Rating */}
       {flipped && (
-        <div className="px-4 pb-6 pt-2 bg-gradient-to-t from-zinc-950 via-zinc-950/95 to-transparent animate-up">
-          <div className="grid grid-cols-4 gap-2">
-            {RATING_BUTTONS.map(({ quality, label, bg, text }) => (
+        <div className="px-[22px] pb-7 pt-3 bg-gradient-to-t from-[#0C0D11] via-[#0C0D11]/95 to-transparent animate-up">
+          <div className="grid grid-cols-4 gap-[9px]">
+            {RATING.map(({ quality, label, bg, border, text, sub }) => (
               <button
                 key={quality}
                 onClick={() => rate(quality)}
-                className="min-h-[60px] rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all duration-150 active:scale-[0.94] active:brightness-125"
-                style={{ background: bg }}
+                className="h-[68px] rounded-[14px] flex flex-col items-center justify-center gap-[3px] transition-transform active:scale-[0.95]"
+                style={{ background: bg, border: `1px solid ${border}` }}
               >
-                <span className="text-[13px] font-semibold" style={{ color: text }}>{label}</span>
-                <span className="text-[10px] opacity-70" style={{ color: text }}>{getNextInterval(quality)}</span>
+                <span className="text-[15px] font-semibold" style={{ color: text }}>{label}</span>
+                <span className="font-num text-[11.5px]" style={{ color: sub }}>{getNextInterval(quality)}</span>
               </button>
             ))}
           </div>
         </div>
       )}
-    </div>
+    </ScreenContainer>
   );
 }

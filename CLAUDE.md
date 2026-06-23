@@ -48,7 +48,7 @@ hachimon/
 │   │   ├── Stats.tsx
 │   │   ├── Settings.tsx
 │   │   ├── ReviewSession.tsx
-│   │   ├── InterviewFilter.tsx
+│   │   ├── Forge.tsx
 │   │   └── SessionComplete.tsx
 │   ├── lib/
 │   │   ├── sm2.ts              # SM-2 알고리즘
@@ -131,7 +131,7 @@ settings:  { key, value }
 ## 복습 모드 3가지
 
 1. **오늘의 복습** — SM-2 due 카드 15장 자동 선택. overdue 우선 → due 빠른 순. 원탭 시작.
-2. **면접 훈련** — 덱 트리 + 티어 필터 + 세션 크기 조절. 핵심 시나리오.
+2. **단련(鍛鍊)** — 덱 트리 + 티어 필터 + 세션 크기 조절. 약점을 거듭 벼리는 핵심 시나리오.
 3. **새 카드 학습** — cards.json 갱신 시 새 카드 감지. Foundation → Mechanism → Diagnosis 순차 노출.
 
 ## UI/UX 규칙
@@ -263,7 +263,7 @@ gutter:      #484f58
 
 | 탭 | 내용 |
 |----|------|
-| Home | 3칸 요약(due/streak/total), 오늘의 목표 진행률, 복습·면접 버튼, 새 카드 알림, Due Top 3 덱, 약한 카드(Leech) |
+| Home | 3칸 요약(due/streak/total), 오늘의 목표 진행률, 복습·단련 버튼, 새 카드 알림, Due Top 3 덱, 약한 카드(Leech) |
 | Decks | 55개 덱 트리 (그룹 접기/펼치기), 탭 → 덱 상세 바텀시트 (카드 미리보기) |
 | Stats | 총 복습/마스터/정답률, 복습 히트맵(20주 CSS grid), 일별 복습량(30일 바 차트), 티어별 정답률 추이 |
 | Settings | 세션 설정 슬라이더(일일 신규/복습 상한/세션 크기), SM-2 파라미터(초기 EF/최소 EF), 데이터 관리(리셋/내보내기) |
@@ -272,8 +272,8 @@ gutter:      #484f58
 
 | 화면 | 진입 | 내용 |
 |------|------|------|
-| InterviewFilter | Home → "면접 훈련 모드" | 덱 선택(다중) + 티어 칩 + 세션 크기 + 시작 버튼 |
-| ReviewSession | Home → "오늘의 복습 시작" 또는 InterviewFilter → "시작" | 프로그레스 바 + 질문 → 탭 → 답변(마크다운) + 4단계 평가 |
+| Forge | Home → "단련" | 덱 선택(다중) + 티어 칩 + 세션 크기 + 시작 버튼 |
+| ReviewSession | Home → "오늘의 복습 시작" 또는 Forge → "시작" | 프로그레스 바 + 질문 → 탭 → 답변(마크다운) + 4단계 평가 |
 | SessionComplete | ReviewSession 완료 | 정답률, 소요시간, 티어별 결과, 틀린 카드, 재복습/홈 버튼 |
 
 ## 설정 기본값
@@ -322,7 +322,7 @@ $ hachimon-cli parse /path/to/vault -o ./public/cards.json
 ## 마일스톤
 
 - **v0.1 (MVP)** — 파이프라인 관통: CLI → cards.json → PWA 복습 세션 → Cloudflare 배포
-- **v0.2** — 면접 훈련 모드 + Home/세션완료 + 마크다운 렌더링 + 코드 하이라이팅
+- **v0.2** — 단련 모드 + Home/세션완료 + 마크다운 렌더링 + 코드 하이라이팅
 - **v0.3** — 오프라인(SW) + 새 카드 학습 + 스와이프 제스처 + 설정 + A2HS
 - **v0.4** — Decks 탭 + Stats 탭 + Web Push 리마인더
 - **v0.5** — FSRS 전환 검토, Obsidian 플러그인, 이미지 카드

@@ -44,4 +44,4 @@ export type Quality = 0 | 2 | 4 | 5; // Again | Hard | Good | Easy
 
 export type Tab = 'home' | 'decks' | 'stats' | 'settings';
 
-export type Screen = 'tabs' | 'interview' | 'review' | 'complete';
+export type Screen = 'tabs' | 'forge' | 'review' | 'complete';

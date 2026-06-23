@@ -1,30 +1,38 @@
 import { useState, useCallback } from 'react';
 import type { Tab, Screen, Card, Schedule } from '@/types';
 import { useCards } from '@/hooks/useCards';
-import { useDueCards } from '@/hooks/useDueCards';
-import { getDueCards } from '@/lib/data';
+import { getDueCards, getCardsByIds } from '@/lib/data';
 import type { SessionSummary } from '@/hooks/useReviewSession';
 import TabBar from '@/components/layout/TabBar';
+import ScreenContainer from '@/components/layout/ScreenContainer';
+import { ToriiMark } from '@/components/layout/PageLayout';
 import Home from '@/pages/Home';
 import Decks from '@/pages/Decks';
 import Stats from '@/pages/Stats';
 import Settings from '@/pages/Settings';
 import ReviewSession from '@/pages/ReviewSession';
-import InterviewFilter from '@/pages/InterviewFilter';
+import Forge from '@/pages/Forge';
 import SessionComplete from '@/pages/SessionComplete';
 
 export default function App() {
   const { loading, error } = useCards();
-  const { cards: dueCards, refresh: refreshDue } = useDueCards();
   const [tab, setTab] = useState<Tab>('home');
   const [screen, setScreen] = useState<Screen>('tabs');
   const [sessionCards, setSessionCards] = useState<(Card & { schedule: Schedule })[]>([]);
   const [sessionSummary, setSessionSummary] = useState<SessionSummary | null>(null);
 
-  const startReview = useCallback(() => {
-    setSessionCards(dueCards);
+  // 시작 시점에 due 카드를 새로 조회 — 초기화 race를 피한다
+  const startReview = useCallback(async () => {
+    const fresh = await getDueCards(15);
+    setSessionCards(fresh);
     setScreen('review');
-  }, [dueCards]);
+  }, []);
+
+  // 단련(Forge) — 필터로 고른 카드로 세션 시작
+  const startForge = useCallback((cards: (Card & { schedule: Schedule })[]) => {
+    setSessionCards(cards);
+    setScreen('review');
+  }, []);
 
   const handleComplete = useCallback((summary: SessionSummary) => {
     setSessionSummary(summary);
@@ -33,11 +41,9 @@ export default function App() {
 
   const handleRetry = useCallback(async () => {
     if (!sessionSummary) return;
-    // Reload wrong cards from IndexedDB with fresh schedules
-    const { getDueCards: fetchDue } = await import('@/lib/data');
-    const freshCards = await fetchDue(200);
-    const wrongIds = new Set(sessionSummary.wrongCards.map((c) => c.cardId));
-    const retryCards = freshCards.filter((c) => wrongIds.has(c.id));
+    // 틀린 카드를 ID로 직접 조회 — 방금 평가돼 due가 아니어도 다시 꺼낸다
+    const wrongIds = sessionSummary.wrongCards.map((c) => c.cardId);
+    const retryCards = await getCardsByIds(wrongIds);
     setSessionCards(retryCards);
     setSessionSummary(null);
     setScreen('review');
@@ -48,8 +54,7 @@ export default function App() {
     setTab('home');
     setSessionCards([]);
     setSessionSummary(null);
-    refreshDue();
-  }, [refreshDue]);
+  }, []);
 
   const startDeckReview = useCallback(async (deckId: string) => {
     const allDue = await getDueCards(200);
@@ -69,23 +74,23 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="w-full max-w-[393px] mx-auto min-h-svh flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <img src="/logo.png" alt="Hachimon" className="w-16 h-16 rounded-2xl mx-auto animate-pulse" />
-          <p className="text-[14px] text-zinc-400">카드 불러오는 중...</p>
+      <ScreenContainer className="flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="flex justify-center animate-pulse"><ToriiMark size={60} /></div>
+          <p className="text-[14px] text-[#969BA6]">카드 불러오는 중...</p>
         </div>
-      </div>
+      </ScreenContainer>
     );
   }
 
   if (error) {
     return (
-      <div className="w-full max-w-[393px] mx-auto min-h-svh flex items-center justify-center px-4">
+      <ScreenContainer className="flex items-center justify-center px-4">
         <div className="text-center space-y-2">
-          <p className="text-[16px] font-semibold text-red-400">로딩 실패</p>
-          <p className="text-[13px] text-zinc-400">{error}</p>
+          <p className="text-[16px] font-semibold text-[#DD8C85]">로딩 실패</p>
+          <p className="text-[13px] text-[#969BA6]">{error}</p>
         </div>
-      </div>
+      </ScreenContainer>
     );
   }
 
@@ -109,8 +114,8 @@ export default function App() {
     );
   }
 
-  if (screen === 'interview') {
-    return <InterviewFilter />;
+  if (screen === 'forge') {
+    return <Forge onStart={startForge} onExit={goHome} />;
   }
 
   const pages: Record<Tab, React.ReactNode> = {
