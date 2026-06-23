@@ -1,10 +1,13 @@
-import { Sparkles, Flame, CreditCard, ChevronRight } from 'lucide-react';
+import { useEffect } from 'react';
+import { Sparkles, Flame, CreditCard, ChevronRight, Bell } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Screen } from '@/types';
 import PageLayout from '@/components/layout/PageLayout';
 import SectionLabel from '@/components/shared/SectionLabel';
 import { useHomeStats } from '@/hooks/useDueCards';
 import { useSettings } from '@/hooks/useSettings';
+import { getSetting, setSetting } from '@/lib/data';
+import { shouldRemind, localDateKey, type NotificationPermissionState } from '@/lib/reminder';
 
 interface HomeProps {
   onNavigate: (screen: Screen) => void;
@@ -13,7 +16,31 @@ interface HomeProps {
 
 export default function Home({ onNavigate, onStartDeckReview }: HomeProps) {
   const { stats, loading } = useHomeStats();
-  const { settings } = useSettings();
+  const { settings, loading: settingsLoading } = useSettings();
+
+  // 무서버 리마인더 — 앱을 연 시점에 조건 충족 시 로컬 알림 1회(하루 1번)
+  useEffect(() => {
+    if (loading || settingsLoading) return;
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    (async () => {
+      const lastNotifiedDate = await getSetting<string | null>('reminderLastNotified', null);
+      const fire = shouldRemind({
+        enabled: settings.reminderEnabled,
+        permission: Notification.permission as NotificationPermissionState,
+        dueCount: stats.dueCount,
+        todayReviewed: stats.todayReviewed,
+        now: new Date(),
+        reminderHour: settings.reminderHour,
+        lastNotifiedDate,
+      });
+      if (!fire) return;
+      new Notification('Hachimon', {
+        body: `오늘 복습 ${stats.dueCount}장이 기다려요`,
+        icon: '/pwa-192.png',
+      });
+      await setSetting('reminderLastNotified', localDateKey(new Date()));
+    })();
+  }, [loading, settingsLoading, settings, stats]);
 
   if (loading) return <PageLayout><div /></PageLayout>;
 
@@ -40,6 +67,20 @@ export default function Home({ onNavigate, onStartDeckReview }: HomeProps) {
           </div>
         ))}
       </div>
+
+      {/* Reminder banner */}
+      {stats.dueCount > 0 && stats.todayReviewed === 0 && (
+        <button
+          onClick={() => onNavigate('review')}
+          className="flex items-center gap-3 w-full px-4 py-3.5 rounded-[14px] bg-[#E9A94C]/[0.09] border border-[#E9A94C]/25 text-left transition-transform active:scale-[0.99] animate-up"
+        >
+          <Bell size={17} className="text-[#E9A94C] shrink-0" strokeWidth={2} />
+          <span className="text-[13.5px] text-[#E9C892] flex-1 leading-snug">
+            오늘 복습을 아직 안 했어요 · <span className="font-semibold">{stats.dueCount}장</span> 대기
+          </span>
+          <ChevronRight size={16} className="text-[#E9A94C]/70 shrink-0" />
+        </button>
+      )}
 
       {/* Daily goal */}
       <Card className="animate-up stagger-1">
