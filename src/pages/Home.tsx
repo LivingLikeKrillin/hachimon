@@ -1,10 +1,13 @@
-import { Sparkles, Flame, CreditCard, ChevronRight } from 'lucide-react';
+import { useEffect } from 'react';
+import { Sparkles, Flame, CreditCard, ChevronRight, Bell } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Screen } from '@/types';
 import PageLayout from '@/components/layout/PageLayout';
 import SectionLabel from '@/components/shared/SectionLabel';
 import { useHomeStats } from '@/hooks/useDueCards';
 import { useSettings } from '@/hooks/useSettings';
+import { getSetting, setSetting } from '@/lib/data';
+import { shouldRemind, localDateKey, type NotificationPermissionState } from '@/lib/reminder';
 
 interface HomeProps {
   onNavigate: (screen: Screen) => void;
@@ -13,7 +16,31 @@ interface HomeProps {
 
 export default function Home({ onNavigate, onStartDeckReview }: HomeProps) {
   const { stats, loading } = useHomeStats();
-  const { settings } = useSettings();
+  const { settings, loading: settingsLoading } = useSettings();
+
+  // 무서버 리마인더 — 앱을 연 시점에 조건 충족 시 로컬 알림 1회(하루 1번)
+  useEffect(() => {
+    if (loading || settingsLoading) return;
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    (async () => {
+      const lastNotifiedDate = await getSetting<string | null>('reminderLastNotified', null);
+      const fire = shouldRemind({
+        enabled: settings.reminderEnabled,
+        permission: Notification.permission as NotificationPermissionState,
+        dueCount: stats.dueCount,
+        todayReviewed: stats.todayReviewed,
+        now: new Date(),
+        reminderHour: settings.reminderHour,
+        lastNotifiedDate,
+      });
+      if (!fire) return;
+      new Notification('Hachimon', {
+        body: `오늘 복습 ${stats.dueCount}장이 기다려요`,
+        icon: '/pwa-192.png',
+      });
+      await setSetting('reminderLastNotified', localDateKey(new Date()));
+    })();
+  }, [loading, settingsLoading, settings, stats]);
 
   if (loading) return <PageLayout><div /></PageLayout>;
 
@@ -40,6 +67,20 @@ export default function Home({ onNavigate, onStartDeckReview }: HomeProps) {
           </div>
         ))}
       </div>
+
+      {/* Reminder banner */}
+      {stats.dueCount > 0 && stats.todayReviewed === 0 && (
+        <button
+          onClick={() => onNavigate('review')}
+          className="flex items-center gap-3 w-full px-4 py-3.5 rounded-[14px] bg-[#E9A94C]/[0.09] border border-[#E9A94C]/25 text-left transition-transform active:scale-[0.99] animate-up"
+        >
+          <Bell size={17} className="text-[#E9A94C] shrink-0" strokeWidth={2} />
+          <span className="text-[13.5px] text-[#E9C892] flex-1 leading-snug">
+            오늘 복습을 아직 안 했어요 · <span className="font-semibold">{stats.dueCount}장</span> 대기
+          </span>
+          <ChevronRight size={16} className="text-[#E9A94C]/70 shrink-0" />
+        </button>
+      )}
 
       {/* Daily goal */}
       <Card className="animate-up stagger-1">
@@ -106,13 +147,32 @@ export default function Home({ onNavigate, onStartDeckReview }: HomeProps) {
       <div className="animate-up stagger-4">
         <SectionLabel>약한 카드</SectionLabel>
         <Card>
-          <CardContent className="p-6 flex flex-col items-center text-center gap-1.5">
-            <span className="w-[38px] h-[38px] rounded-[11px] bg-[#181B21] border border-white/[0.07] flex items-center justify-center mb-1.5">
-              <Flame size={19} className="text-[#5D636F]" strokeWidth={1.7} />
-            </span>
-            <p className="text-[14.5px] font-medium text-[#C7CCD4]">아직 약한 카드가 없어요</p>
-            <p className="text-[13px] text-[#5D636F] leading-snug">복습을 시작하면 자주 틀리는 카드가 모여요</p>
-          </CardContent>
+          {stats.leeches.length > 0 ? (
+            <CardContent className="p-0">
+              {stats.leeches.slice(0, 5).map((leech, i) => (
+                <div
+                  key={leech.cardId}
+                  className={`flex items-center gap-3 px-4 py-[13px] ${
+                    i < Math.min(stats.leeches.length, 5) - 1 ? 'border-b border-white/[0.06]' : ''
+                  }`}
+                >
+                  <Flame size={16} className="text-[#CD746C] shrink-0" strokeWidth={1.8} />
+                  <span className="text-[14px] text-[#C7CCD4] flex-1 leading-snug line-clamp-2">{leech.question}</span>
+                  <span className="font-num text-[12px] text-[#CD746C] shrink-0">
+                    {leech.againCount}회 모름
+                  </span>
+                </div>
+              ))}
+            </CardContent>
+          ) : (
+            <CardContent className="p-6 flex flex-col items-center text-center gap-1.5">
+              <span className="w-[38px] h-[38px] rounded-[11px] bg-[#181B21] border border-white/[0.07] flex items-center justify-center mb-1.5">
+                <Flame size={19} className="text-[#5D636F]" strokeWidth={1.7} />
+              </span>
+              <p className="text-[14.5px] font-medium text-[#C7CCD4]">아직 약한 카드가 없어요</p>
+              <p className="text-[13px] text-[#5D636F] leading-snug">복습을 시작하면 자주 틀리는 카드가 모여요</p>
+            </CardContent>
+          )}
         </Card>
       </div>
     </PageLayout>

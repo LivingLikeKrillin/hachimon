@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RotateCcw, Download, Info, FolderInput, Database, ChevronRight } from 'lucide-react';
+import { RotateCcw, Download, Info, FolderInput, Database, ChevronRight, Bell } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import PageLayout from '@/components/layout/PageLayout';
 import SectionLabel from '@/components/shared/SectionLabel';
@@ -67,6 +67,20 @@ export default function Settings() {
 
   const revertToDemo = async () => { await useDemoCards(); window.location.reload(); };
 
+  const notifyUnsupported = typeof window !== 'undefined' && !('Notification' in window);
+
+  const toggleReminder = async () => {
+    if (settings.reminderEnabled) {
+      update({ reminderEnabled: false });
+      return;
+    }
+    // 켜는 중 — 알림 권한 요청
+    if (notifyUnsupported) return;
+    let perm = Notification.permission;
+    if (perm === 'default') perm = await Notification.requestPermission();
+    update({ reminderEnabled: perm === 'granted' });
+  };
+
   if (loading) return <PageLayout><div /></PageLayout>;
 
   const presets = [
@@ -106,6 +120,56 @@ export default function Settings() {
           <Info size={13} className="text-[#5D636F] mt-0.5 shrink-0" />
           <p className="text-[12px] text-[#5D636F] leading-relaxed">Ease Factor가 높을수록 복습 간격이 빠르게 늘어납니다. 기본값 2.5를 권장합니다.</p>
         </div>
+      </div>
+
+      {/* Reminder */}
+      <div className="animate-up stagger-2">
+        <SectionLabel upper>복습 리마인더</SectionLabel>
+        <Card>
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3">
+              <Bell size={18} style={{ color: settings.reminderEnabled ? '#E9A94C' : '#969BA6' }} />
+              <div className="flex-1">
+                <p className="text-[15px] font-medium text-[#ECEEF2]">매일 복습 알림</p>
+                <p className="text-[12px] text-[#5D636F]">앱을 열었을 때 미복습이면 알려줘요</p>
+              </div>
+              <button
+                onClick={toggleReminder}
+                disabled={notifyUnsupported}
+                role="switch"
+                aria-checked={settings.reminderEnabled}
+                className="relative w-[46px] h-[28px] rounded-full transition-colors disabled:opacity-40"
+                style={{ background: settings.reminderEnabled ? '#E9A94C' : '#2A2E37' }}
+              >
+                <span
+                  className="absolute top-[3px] w-[22px] h-[22px] rounded-full bg-white transition-[left] duration-200"
+                  style={{ left: settings.reminderEnabled ? '21px' : '3px' }}
+                />
+              </button>
+            </div>
+            {settings.reminderEnabled && (
+              <>
+                <Divider />
+                <SliderSetting
+                  label="알림 시각"
+                  value={settings.reminderHour}
+                  min={0}
+                  max={23}
+                  unit="시"
+                  accent="#E9A94C"
+                  fill={GOLD_FILL}
+                  onChange={(v) => update({ reminderHour: v })}
+                />
+              </>
+            )}
+          </CardContent>
+        </Card>
+        {notifyUnsupported && (
+          <div className="flex items-start gap-2 mt-2.5 px-1">
+            <Info size={13} className="text-[#5D636F] mt-0.5 shrink-0" />
+            <p className="text-[12px] text-[#5D636F] leading-relaxed">이 브라우저는 알림을 지원하지 않습니다.</p>
+          </div>
+        )}
       </div>
 
       {/* Presets */}
