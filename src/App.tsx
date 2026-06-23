@@ -27,6 +27,12 @@ export default function App() {
     setScreen('review');
   }, []);
 
+  // 단련(Forge) — 필터로 고른 카드로 세션 시작
+  const startForge = useCallback((cards: (Card & { schedule: Schedule })[]) => {
+    setSessionCards(cards);
+    setScreen('review');
+  }, []);
+
   const handleComplete = useCallback((summary: SessionSummary) => {
     setSessionSummary(summary);
     setScreen('complete');
@@ -110,7 +116,7 @@ export default function App() {
   }
 
   if (screen === 'forge') {
-    return <Forge />;
+    return <Forge onStart={startForge} onExit={goHome} />;
   }
 
   const pages: Record<Tab, React.ReactNode> = {

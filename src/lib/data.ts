@@ -1,4 +1,4 @@
-import type { Card, Schedule, CardsData } from '@/types';
+import type { Card, Schedule, CardsData, Tier } from '@/types';
 import { getDB } from './db';
 import { mergeCards } from './merge';
 import { parseVault, type VaultFile } from './obsidian';
@@ -199,6 +199,34 @@ export async function getDeckMastery(): Promise<Map<string, MasteryStats>> {
     const s = schedMap.get(card.id);
     if (s && isMastered(s)) m.mastered++;
     out.set(card.deck, m);
+  }
+  return out;
+}
+
+/**
+ * 단련(Forge) 카드 — 선택한 덱/티어에 맞는 카드를 due 여부와 무관하게 뽑아
+ * 무작위로 섞어 limit만큼 반환한다.
+ */
+export async function getForgeCards(
+  deckIds: Set<string>,
+  tiers: Set<Tier>,
+  limit: number,
+): Promise<(Card & { schedule: Schedule })[]> {
+  const db = await getDB();
+  const [cards, schedules] = await Promise.all([db.getAll('cards'), db.getAll('schedules')]);
+  const schedMap = new Map(schedules.map((s) => [s.cardId, s]));
+
+  const matched = cards.filter((c) => deckIds.has(c.deck) && tiers.has(c.tier));
+  // Fisher–Yates 셔플
+  for (let i = matched.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [matched[i], matched[j]] = [matched[j], matched[i]];
+  }
+
+  const out: (Card & { schedule: Schedule })[] = [];
+  for (const c of matched.slice(0, limit)) {
+    const s = schedMap.get(c.id);
+    if (s) out.push({ ...c, schedule: s });
   }
   return out;
 }
