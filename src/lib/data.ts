@@ -12,6 +12,9 @@ import {
   type TierStat,
   type Leech,
 } from './stats';
+import { countIntroducedToday, selectNewCards } from './newcards';
+
+const DEFAULT_DAILY_NEW = 10;
 
 /** 카드 출처: 번들 데모 vs 사용자가 임포트한 Obsidian vault */
 export type CardSource = 'demo' | 'vault';
@@ -75,7 +78,8 @@ export async function getDueCards(limit: number = 15): Promise<(Card & { schedul
 
   const allSchedules = await db.getAll('schedules');
   const due = allSchedules
-    .filter((s) => s.nextReviewAt <= now)
+    // 미복습(새) 카드는 due 풀에서 제외 — 새 카드 학습 플로우로만 도입
+    .filter((s) => s.nextReviewAt <= now && s.lastReviewedAt !== null)
     .sort((a, b) => a.nextReviewAt.localeCompare(b.nextReviewAt));
 
   const limited = due.slice(0, limit);
@@ -91,6 +95,30 @@ export async function getDueCards(limit: number = 15): Promise<(Card & { schedul
   return results;
 }
 
+/**
+ * 새 카드 학습 큐 — 미복습 카드를 F→M→D 순으로,
+ * 남은 일일 신규 할당량(dailyNew − 오늘 도입분)만큼 반환한다.
+ */
+export async function getNewCards(): Promise<(Card & { schedule: Schedule })[]> {
+  const db = await getDB();
+  const [cards, schedules, logs] = await Promise.all([
+    db.getAll('cards'),
+    db.getAll('schedules'),
+    db.getAll('reviewLog'),
+  ]);
+  const appSettings = await getSetting<{ dailyNew?: number }>('appSettings', {});
+  const dailyNew = appSettings.dailyNew ?? DEFAULT_DAILY_NEW;
+  const remaining = Math.max(0, dailyNew - countIntroducedToday(logs, new Date()));
+
+  const selected = selectNewCards(cards, schedules, remaining);
+  const schedById = new Map(schedules.map((s) => [s.cardId, s]));
+  return selected.map((c) => ({ ...c, schedule: schedById.get(c.id)! }));
+}
+
+export async function getNewCardCount(): Promise<number> {
+  return (await getNewCards()).length;
+}
+
 export async function getTotalCardCount(): Promise<number> {
   const db = await getDB();
   return db.count('cards');
@@ -100,7 +128,7 @@ export async function getDueCount(): Promise<number> {
   const db = await getDB();
   const now = new Date().toISOString();
   const all = await db.getAll('schedules');
-  return all.filter((s) => s.nextReviewAt <= now).length;
+  return all.filter((s) => s.nextReviewAt <= now && s.lastReviewedAt !== null).length;
 }
 
 export async function getTodayReviewCount(): Promise<number> {
@@ -142,7 +170,7 @@ export async function getDueByDeck(): Promise<{ deckId: string; name: string; co
   const now = new Date().toISOString();
   const schedules = await db.getAll('schedules');
   const dueCardIds = new Set(
-    schedules.filter((s) => s.nextReviewAt <= now).map((s) => s.cardId)
+    schedules.filter((s) => s.nextReviewAt <= now && s.lastReviewedAt !== null).map((s) => s.cardId)
   );
 
   const cards = await db.getAll('cards');

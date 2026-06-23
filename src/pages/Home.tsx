@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Sparkles, Flame, CreditCard, ChevronRight, Bell } from 'lucide-react';
+import { Sparkles, Flame, CreditCard, ChevronRight, Bell, GraduationCap } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Screen } from '@/types';
 import PageLayout from '@/components/layout/PageLayout';
@@ -12,9 +12,10 @@ import { shouldRemind, localDateKey, type NotificationPermissionState } from '@/
 interface HomeProps {
   onNavigate: (screen: Screen) => void;
   onStartDeckReview?: (deckId: string) => void;
+  onStartNewCards?: () => void;
 }
 
-export default function Home({ onNavigate, onStartDeckReview }: HomeProps) {
+export default function Home({ onNavigate, onStartDeckReview, onStartNewCards }: HomeProps) {
   const { stats, loading } = useHomeStats();
   const { settings, loading: settingsLoading } = useSettings();
 
@@ -117,6 +118,23 @@ export default function Home({ onNavigate, onStartDeckReview }: HomeProps) {
           단련
         </button>
       </div>
+
+      {/* New cards */}
+      {stats.newCardCount > 0 && (
+        <button
+          onClick={onStartNewCards}
+          className="flex items-center gap-3.5 w-full px-4 py-4 rounded-[15px] bg-[#6E8BC9]/[0.10] border border-[#6E8BC9]/25 text-left transition-transform duration-150 active:scale-[0.99] animate-up stagger-3"
+        >
+          <span className="w-[38px] h-[38px] rounded-[11px] bg-[#6E8BC9]/15 flex items-center justify-center shrink-0">
+            <GraduationCap size={19} className="text-[#93A8DC]" strokeWidth={1.8} />
+          </span>
+          <div className="flex-1">
+            <p className="text-[14.5px] font-semibold text-[#ECEEF2]">새 카드 학습</p>
+            <p className="text-[12.5px] text-[#5D636F] mt-0.5">처음 보는 카드 <span className="text-[#93A8DC] font-medium">{stats.newCardCount}장</span> 준비됨</p>
+          </div>
+          <ChevronRight size={17} className="text-[#6E8BC9]/70 shrink-0" />
+        </button>
+      )}
 
       {/* Review queue */}
       {stats.dueByDeck.length > 0 && (

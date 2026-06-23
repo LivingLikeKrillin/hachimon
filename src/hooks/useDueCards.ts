@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Card, Schedule } from '@/types';
-import { getDueCards, getDueCount, getTotalCardCount, getTodayReviewCount, getStreak, getDueByDeck, getLeeches } from '@/lib/data';
+import { getDueCards, getDueCount, getTotalCardCount, getTodayReviewCount, getStreak, getDueByDeck, getLeeches, getNewCardCount } from '@/lib/data';
 import type { Leech } from '@/lib/stats';
 
 interface HomeStats {
@@ -10,6 +10,7 @@ interface HomeStats {
   todayReviewed: number;
   dueByDeck: { deckId: string; name: string; count: number }[];
   leeches: Leech[];
+  newCardCount: number;
 }
 
 export function useDueCards(limit: number = 15) {
@@ -36,19 +37,21 @@ export function useHomeStats() {
     todayReviewed: 0,
     dueByDeck: [],
     leeches: [],
+    newCardCount: 0,
   });
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    const [dueCount, streak, totalCards, todayReviewed, dueByDeck, leeches] = await Promise.all([
+    const [dueCount, streak, totalCards, todayReviewed, dueByDeck, leeches, newCardCount] = await Promise.all([
       getDueCount(),
       getStreak(),
       getTotalCardCount(),
       getTodayReviewCount(),
       getDueByDeck(),
       getLeeches(),
+      getNewCardCount(),
     ]);
-    setStats({ dueCount, streak, totalCards, todayReviewed, dueByDeck, leeches });
+    setStats({ dueCount, streak, totalCards, todayReviewed, dueByDeck, leeches, newCardCount });
     setLoading(false);
   }, []);
 

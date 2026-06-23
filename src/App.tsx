@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { Tab, Screen, Card, Schedule } from '@/types';
 import { useCards } from '@/hooks/useCards';
-import { getDueCards, getCardsByIds } from '@/lib/data';
+import { getDueCards, getCardsByIds, getNewCards } from '@/lib/data';
 import type { SessionSummary } from '@/hooks/useReviewSession';
 import TabBar from '@/components/layout/TabBar';
 import ScreenContainer from '@/components/layout/ScreenContainer';
@@ -31,6 +31,14 @@ export default function App() {
   // 단련(Forge) — 필터로 고른 카드로 세션 시작
   const startForge = useCallback((cards: (Card & { schedule: Schedule })[]) => {
     setSessionCards(cards);
+    setScreen('review');
+  }, []);
+
+  // 새 카드 학습 — 시작 시점에 새 카드 큐를 재조회
+  const startNewCards = useCallback(async () => {
+    const fresh = await getNewCards();
+    if (fresh.length === 0) return;
+    setSessionCards(fresh);
     setScreen('review');
   }, []);
 
@@ -119,7 +127,7 @@ export default function App() {
   }
 
   const pages: Record<Tab, React.ReactNode> = {
-    home: <Home onNavigate={handleNavigate} onStartDeckReview={startDeckReview} />,
+    home: <Home onNavigate={handleNavigate} onStartDeckReview={startDeckReview} onStartNewCards={startNewCards} />,
     decks: <Decks />,
     stats: <Stats />,
     settings: <Settings />,
