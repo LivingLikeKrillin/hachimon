@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import Markdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
@@ -51,8 +51,13 @@ export default function ReviewSession({ cards, onComplete, onExit }: ReviewSessi
     else if (dir === 'right') rate(5);
   };
 
+  // 세션 종료 시 부모로 결과 전달 — 렌더 중이 아닌 커밋 후(useEffect)에 호출해야
+  // "다른 컴포넌트 렌더 중 setState" 경고를 피한다.
+  useEffect(() => {
+    if (finished) onComplete(getSummary());
+  }, [finished, onComplete, getSummary]);
+
   if (finished) {
-    onComplete(getSummary());
     return null;
   }
 
