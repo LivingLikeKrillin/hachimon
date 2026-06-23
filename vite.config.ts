@@ -11,7 +11,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       // 빌드 산출물(JS/CSS/HTML/폰트/아이콘)을 precache → 오프라인 앱 셸
-      includeAssets: ['favicon.ico', 'logo.png'],
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'Hachimon',
         short_name: 'Hachimon',

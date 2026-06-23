@@ -15,15 +15,18 @@ interface TabBarProps {
 
 export default function TabBar({ active, onChange }: TabBarProps) {
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[393px] bg-[#0C0D11]/85 backdrop-blur-xl border-t border-white/[0.07] z-50">
-      <div className="flex justify-around h-[52px]">
+    <nav
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[393px] bg-[#0C0D11]/85 backdrop-blur-xl border-t border-white/[0.07] z-50"
+      style={{ paddingTop: 10, paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+    >
+      <div className="flex justify-around items-center">
         {tabs.map(({ id, label, icon: Icon }) => {
           const on = active === id;
           return (
             <button
               key={id}
               onClick={() => onChange(id)}
-              className="relative flex flex-col items-center justify-center min-w-[64px] gap-1.5 transition-colors"
+              className="flex flex-col items-center justify-center min-w-[64px] gap-1.5"
               style={{ color: on ? '#E9A94C' : '#5D636F' }}
             >
               <Icon
@@ -36,7 +39,6 @@ export default function TabBar({ active, onChange }: TabBarProps) {
           );
         })}
       </div>
-      <div className="pb-safe" style={{ minHeight: 24 }} />
     </nav>
   );
 }

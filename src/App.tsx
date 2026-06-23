@@ -5,6 +5,7 @@ import { getDueCards, getCardsByIds } from '@/lib/data';
 import type { SessionSummary } from '@/hooks/useReviewSession';
 import TabBar from '@/components/layout/TabBar';
 import ScreenContainer from '@/components/layout/ScreenContainer';
+import { ToriiMark } from '@/components/layout/PageLayout';
 import Home from '@/pages/Home';
 import Decks from '@/pages/Decks';
 import Stats from '@/pages/Stats';
@@ -74,9 +75,9 @@ export default function App() {
   if (loading) {
     return (
       <ScreenContainer className="flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <img src="/logo.png" alt="Hachimon" className="w-16 h-16 rounded-2xl mx-auto animate-pulse" />
-          <p className="text-[14px] text-zinc-400">카드 불러오는 중...</p>
+        <div className="text-center space-y-4">
+          <div className="flex justify-center animate-pulse"><ToriiMark size={60} /></div>
+          <p className="text-[14px] text-[#969BA6]">카드 불러오는 중...</p>
         </div>
       </ScreenContainer>
     );
@@ -86,8 +87,8 @@ export default function App() {
     return (
       <ScreenContainer className="flex items-center justify-center px-4">
         <div className="text-center space-y-2">
-          <p className="text-[16px] font-semibold text-red-400">로딩 실패</p>
-          <p className="text-[13px] text-zinc-400">{error}</p>
+          <p className="text-[16px] font-semibold text-[#DD8C85]">로딩 실패</p>
+          <p className="text-[13px] text-[#969BA6]">{error}</p>
         </div>
       </ScreenContainer>
     );
