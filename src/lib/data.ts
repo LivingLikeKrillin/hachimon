@@ -204,6 +204,20 @@ export async function getDeckMastery(): Promise<Map<string, MasteryStats>> {
 }
 
 /**
+ * 카드 ID 목록으로 카드 + 현재 스케줄을 조회한다 (due 여부 무관).
+ * 재복습("틀린 카드만 다시")처럼 방금 평가해 미래로 밀린 카드를 다시 꺼낼 때 쓴다.
+ */
+export async function getCardsByIds(ids: string[]): Promise<(Card & { schedule: Schedule })[]> {
+  const db = await getDB();
+  const out: (Card & { schedule: Schedule })[] = [];
+  for (const id of ids) {
+    const [card, schedule] = await Promise.all([db.get('cards', id), db.get('schedules', id)]);
+    if (card && schedule) out.push({ ...card, schedule });
+  }
+  return out;
+}
+
+/**
  * 단련(Forge) 카드 — 선택한 덱/티어에 맞는 카드를 due 여부와 무관하게 뽑아
  * 무작위로 섞어 limit만큼 반환한다.
  */

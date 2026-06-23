@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { Tab, Screen, Card, Schedule } from '@/types';
 import { useCards } from '@/hooks/useCards';
-import { getDueCards } from '@/lib/data';
+import { getDueCards, getCardsByIds } from '@/lib/data';
 import type { SessionSummary } from '@/hooks/useReviewSession';
 import TabBar from '@/components/layout/TabBar';
 import ScreenContainer from '@/components/layout/ScreenContainer';
@@ -40,11 +40,9 @@ export default function App() {
 
   const handleRetry = useCallback(async () => {
     if (!sessionSummary) return;
-    // Reload wrong cards from IndexedDB with fresh schedules
-    const { getDueCards: fetchDue } = await import('@/lib/data');
-    const freshCards = await fetchDue(200);
-    const wrongIds = new Set(sessionSummary.wrongCards.map((c) => c.cardId));
-    const retryCards = freshCards.filter((c) => wrongIds.has(c.id));
+    // 틀린 카드를 ID로 직접 조회 — 방금 평가돼 due가 아니어도 다시 꺼낸다
+    const wrongIds = sessionSummary.wrongCards.map((c) => c.cardId);
+    const retryCards = await getCardsByIds(wrongIds);
     setSessionCards(retryCards);
     setSessionSummary(null);
     setScreen('review');
