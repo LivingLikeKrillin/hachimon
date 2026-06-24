@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { initializeCards } from '@/lib/data';
+import { migrateToFsrs } from '@/lib/migrate';
 
 export function useCards() {
   const [loading, setLoading] = useState(true);
@@ -7,6 +8,7 @@ export function useCards() {
 
   useEffect(() => {
     initializeCards()
+      .then(() => migrateToFsrs())
       .then(() => setLoading(false))
       .catch((e) => {
         setError(e instanceof Error ? e.message : 'Failed to load cards');
