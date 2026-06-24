@@ -31,6 +31,16 @@ describe('applyRating', () => {
     expect(new Date(easy.nextReviewAt).getTime())
       .toBeGreaterThan(new Date(again.nextReviewAt).getTime());
   });
+
+  it('연속 복습이 Schedule을 통해 라운드트립된다 (reps 누적, state 유지)', () => {
+    const s0 = createInitialSchedule('c1', now);
+    const later = new Date(2026, 5, 27, 12, 0, 0); // 3일 후
+    const s1 = applyRating(s0, 4, now);        // 1st Good
+    const s2 = applyRating(s1, 4, later);      // 2nd Good — s1을 다시 toFsrsCard로 변환해 입력
+    expect(s2.reps).toBe(2);
+    expect(s2.state).toBe(State.Review);
+    expect(new Date(s2.nextReviewAt).getTime()).toBeGreaterThan(later.getTime());
+  });
 });
 
 describe('previewIntervals', () => {

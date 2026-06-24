@@ -45,7 +45,7 @@ export function useReviewSession(initialCards: (Card & { schedule: Schedule })[]
 
     const db = await getDB();
 
-    // Apply SM-2
+    // Apply FSRS rating
     const updated = applyRating(currentCard.schedule, quality);
     await db.put('schedules', updated);
 

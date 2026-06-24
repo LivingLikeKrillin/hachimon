@@ -3,7 +3,6 @@ import {
   generatorParameters,
   createEmptyCard,
   Rating,
-  State,
   type FSRS,
   type Grade,
   type Card as FsrsCard,
@@ -32,16 +31,18 @@ export function getScheduler(opts: SchedulerOptions): FSRS {
       request_retention: opts.requestRetention,
       maximum_interval: opts.maximumInterval ?? 36500,
       enable_fuzz: true,
+      // Hachimon은 하루 1회 복습하는 일(day) 단위 앱이라 FSRS의 분 단위
+      // 학습 스텝(1m/10m)이 모델에 맞지 않는다. short-term을 끄면 첫 복습부터
+      // 일 단위 스케줄이 잡히고, 미사용 learning_steps 필드가 무의미해진다
+      // (Schedule 매핑에서 learning_steps를 버리는 것이 의도적이고 안전함).
+      enable_short_term: false,
     }),
   );
 }
 
 const DEFAULT_RETENTION = 0.9;
-let defaultScheduler: FSRS | null = null;
 function scheduler(opts?: SchedulerOptions): FSRS {
-  if (opts) return getScheduler(opts);
-  if (!defaultScheduler) defaultScheduler = getScheduler({ requestRetention: DEFAULT_RETENTION });
-  return defaultScheduler;
+  return getScheduler(opts ?? { requestRetention: DEFAULT_RETENTION });
 }
 
 function toFsrsCard(s: Schedule): FsrsCard {
@@ -53,7 +54,7 @@ function toFsrsCard(s: Schedule): FsrsCard {
     scheduled_days: s.scheduledDays,
     reps: s.reps,
     lapses: s.lapses,
-    state: s.state as State,
+    state: s.state,
     last_review: s.lastReviewedAt ? new Date(s.lastReviewedAt) : undefined,
     learning_steps: 0,
   };

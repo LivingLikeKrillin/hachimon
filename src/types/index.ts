@@ -1,3 +1,5 @@
+import type { State } from 'ts-fsrs';
+
 export type Tier = 'foundation' | 'mechanism' | 'diagnosis';
 
 export interface Card {
@@ -27,7 +29,7 @@ export interface Schedule {
   cardId: string;
   stability: number;
   difficulty: number;
-  state: number;           // 0 New · 1 Learning · 2 Review · 3 Relearning
+  state: State;            // 0 New · 1 Learning · 2 Review · 3 Relearning
   reps: number;
   lapses: number;
   elapsedDays: number;
