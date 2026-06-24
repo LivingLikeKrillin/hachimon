@@ -237,6 +237,8 @@ $ npm run inbox -- <inbox-dir> [--dry-run]
 
 덱은 노트 안의 `#flashcard/<deck>` **태그로 결정**되므로, draft를 vault 어디로 옮겨도 분류가 보존됩니다(이동 위치 무관). 조립 결과는 앱·CLI·플러그인과 **동일한 단일 진실원천 파서**(`parseVault`)로 라운드트립해 의도한 카드가 그대로 추출되는지 검증한 뒤에만 draft로 기록하며, 검증에 실패한 노트는 보류하고 인박스 원본을 보존합니다. 구현: `scripts/inbox.ts`(부수효과·Claude 호출), 순수 로직은 `src/lib/forge/*`(schema·prompts·decks·assemble).
 
+> ⚠️ 빌드타임 파서(`npm run parse`)는 `_forge-drafts`와 `inbox` 디렉토리를 vault 스캔에서 제외합니다(미검수 draft·raw 캡처가 `cards.json`에 섞이지 않도록). `-o`로 **다른 이름의 출력 폴더**를 쓰거나 인박스를 다른 이름으로 두고 그 폴더가 **vault 내부에 있다면**, `scripts/parse-vault.ts`의 `EXCLUDE_DIRS`에 그 이름을 직접 추가하세요.
+
 ---
 
 ## Project Structure
