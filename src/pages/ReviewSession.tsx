@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import Markdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
+import { imageUrlTransform } from '@/lib/markdown';
 import type { Quality, Card, Schedule } from '@/types';
 import TierBadge from '@/components/shared/TierBadge';
 import SectionLabel from '@/components/shared/SectionLabel';
@@ -134,7 +135,18 @@ export default function ReviewSession({ cards, onComplete, onExit }: ReviewSessi
               <div className="h-px bg-white/[0.07] my-5" />
               <SectionLabel tight upper>답변</SectionLabel>
               <div className="prose-hachimon text-[15.5px] leading-[1.62] text-[#C7CCD4]">
-                <Markdown rehypePlugins={[rehypeHighlight]}>{currentCard.answer}</Markdown>
+                <Markdown
+                  rehypePlugins={[rehypeHighlight]}
+                  urlTransform={imageUrlTransform}
+                  components={{
+                    img: ({ node, ...props }) => {
+                      void node;
+                      return <img {...props} className="max-w-full rounded-md my-2" />;
+                    },
+                  }}
+                >
+                  {currentCard.answer}
+                </Markdown>
               </div>
             </div>
           ) : (
