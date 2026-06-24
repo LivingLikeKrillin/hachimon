@@ -177,11 +177,11 @@ SM-2에서 FSRS로의 전환을 검토하고, Obsidian과의 통합을 강화한
 - [x] `tsconfig.scripts.json`로 타입체크, `build`에 포함
 - [~] Kotlin/GraalVM — **미채택**. `src/lib/obsidian.ts`(parseVault)가 이미 단일 진실원천이라, in-app·CLI·(향후)플러그인 3중 중복을 피하려 Node/TS 채택. "Obsidian 운용 전제"(생태계가 TS)에도 부합.
 
-### 5-3. Obsidian 플러그인
+### 5-3. Obsidian 플러그인 (완료 — 내보내기 명령)
 
-- [ ] Obsidian 커뮤니티 플러그인 포맷
-- [ ] 볼트 내에서 직접 cards.json 생성
-- [ ] 카드 편집 UI
+- [x] Obsidian 플러그인 포맷 (`obsidian-plugin/`, manifest/main.js, 데스크톱 전용)
+- [x] 볼트 내에서 직접 cards.json 생성 — 명령/리본 → `parseVault` → 절대 경로 작성 (in-app·CLI·플러그인 단일 진실원천). 설치/사용: `docs/obsidian-plugin.md`
+- [~] 카드 편집 UI — 비목표(마크다운 직접 편집과 중복). 내보내기 MVP로 한정.
 
 ### 5-4. 이미지 카드
 
