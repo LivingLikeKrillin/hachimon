@@ -177,15 +177,20 @@ Gate 8 (Death)    → #e11d48  Crimson
 
 ---
 
-## CLI Parser
+## CLI Parser (빌드타임 파이프라인)
 
-> 대량 볼트를 빌드 타임에 `cards.json`으로 굽고 싶을 때를 위한 옵션입니다 (계획됨). 일반 사용자는 위의 **인앱 가져오기**로 충분합니다.
+> maintainer가 자신의 Obsidian 볼트를 빌드 타임에 `cards.json`으로 굽고 싶을 때를 위한 옵션입니다. 개별 사용자는 위의 **인앱 가져오기**로 충분합니다.
 
-Kotlin CLI로 Obsidian 볼트를 파싱하여 `cards.json`을 생성합니다.
+Node/TS CLI로 볼트 디렉토리를 재귀 파싱하여 `cards.json`을 생성합니다.
 
 ```bash
-$ hachimon-cli parse /path/to/vault -o ./public/cards.json
+$ npm run parse -- /path/to/vault -o public/cards.json
+# ✓ N decks / M cards → public/cards.json
 ```
+
+배포 흐름: `parse` → `git commit public/cards.json` → push → Cloudflare Pages. 배포된 앱이 샘플이 아닌 실제 카드를 싣게 됩니다.
+
+이 CLI는 인앱 가져오기와 **동일한 파서**(`src/lib/obsidian.ts`의 `parseVault`)를 재사용합니다. 빌드타임 경로(CLI)와 런타임 경로(인앱)가 같은 id·sourceHash·덱 집계를 내므로 결과가 일관됩니다. 구현: `scripts/parse-vault.ts` (유닛 테스트: `scripts/parse-vault.test.ts`).
 
 ### 파싱 규칙
 
