@@ -103,9 +103,19 @@ describe('validateDraft', () => {
     expect(v.ok).toBe(false);
   });
 
-  it('답변에 :: 가 있으면(유령 카드) 거부한다', () => {
+  it('단일 라인 답변 내 :: 는 충실히 라운드트립되어 통과한다', () => {
     const v = ok({ foundation: [{ q: 'Q?', a: 'a::b 형태' }], mechanism: [], diagnosis: [] });
+    expect(v.ok).toBe(true);
+  });
+
+  it('멀티라인 답변의 :: 연속 줄은 유령 카드(개수 불일치)로 거부한다', () => {
+    const v = ok({ foundation: [{ q: 'Q?', a: '첫 줄\n둘째::셋째' }], mechanism: [], diagnosis: [] });
     expect(v.ok).toBe(false);
+  });
+
+  it('코드펜스 답변은 충실히 라운드트립되어 통과한다', () => {
+    const v = ok({ foundation: [{ q: 'Q?', a: '```java\nint x = 1;\n```' }], mechanism: [], diagnosis: [] });
+    expect(v.ok).toBe(true);
   });
 
   it('답변 내 ### 헤딩 라인은 카드 손상으로 거부한다', () => {

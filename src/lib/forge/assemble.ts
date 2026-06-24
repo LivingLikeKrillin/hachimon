@@ -41,21 +41,6 @@ function ensureQuestionMark(q: string): string {
   return t.endsWith('?') ? t : `${t}?`;
 }
 
-/** 백틱 인라인코드 밖의 `::` 구분자 개수. parseVault.firstDelimiter와 동일 규칙. */
-function delimiterCount(line: string): number {
-  let inCode = false;
-  let n = 0;
-  for (let i = 0; i < line.length - 1; i++) {
-    const ch = line[i];
-    if (ch === '`') inCode = !inCode;
-    else if (!inCode && ch === ':' && line[i + 1] === ':') {
-      n++;
-      i++;
-    }
-  }
-  return n;
-}
-
 /** 정리된 노트 + 3-tier 퀴즈를 draft 마크다운으로 조립한다. created는 결정성을 위해 주입. */
 export function assembleNote(input: AssembleInput, created: string): string {
   const lines: string[] = [
@@ -96,13 +81,14 @@ export interface DraftValidation {
 }
 
 /** 강한 검증 게이트: 조립 결과를 단일 진실원천 파서로 라운드트립해, 의도한 카드가
- *  그대로(개수·질문·답변) 추출되는지 확인한다. 답변 내 `::`/`###`/`#flashcard` 등 구조
+ *  그대로(개수·질문·답변) 추출되는지 확인한다. 답변 내 `###`/`#flashcard` 등 구조
  *  문자로 인한 묵시적 손상(카드 수 변화·질문 변형·답변 절단)을 잡는다.
- *  - 카드 수: 의도한 개수와 일치해야 한다.
+ *  - 카드 수: 의도한 개수와 일치해야 한다(멀티라인 답변의 구조성 줄로 인한 유령 카드 차단).
  *  - 질문: parseVault가 추출한 질문이 의도와 동일해야 한다(질문 내 `::`로 인한 변형 차단).
  *  - 답변: 라운드트립 답변이 의도(트림)와 동일해야 한다(답변 내 `###`/`#`로 인한 절단 차단).
- *  - 구분자: 카드 라인의 `::`(백틱 밖)는 정확히 1개여야 한다(답변 내 `::`로 인한 모호성 차단).
- *  count만 보는 게이트로는 못 잡던 묵시적 손상 케이스를 모두 거부한다. */
+ *  count만 보는 게이트로는 못 잡던 묵시적 손상 케이스를 모두 거부한다.
+ *  단, 단일 라인 답변 내 `::`는 파서가 첫 구분자로 결정적으로 분리하고 q·a가 모두 의도와
+ *  일치하므로(추가 `::`는 답변 본문) 카드는 증명적으로 옳다 — 정상 통과시킨다. */
 export function validateDraft(
   content: string,
   quiz: QuizResult,
@@ -122,17 +108,6 @@ export function validateDraft(
       cardCount: parsed.length,
       reason: `카드 수 불일치(기대 ${expected.length}, 실제 ${parsed.length})`,
     };
-  }
-
-  // 카드 라인에 구분자 `::`(백틱 밖)가 정확히 1개인지 — 질문/답변 내 `::`로 인한 모호성 차단.
-  for (const e of expected) {
-    if (delimiterCount(`${e.q}::${e.a}`) !== 1) {
-      return {
-        ok: false,
-        cardCount: parsed.length,
-        reason: '구분자 모호성 감지(질문/답변 내 `::` 다중 출현)',
-      };
-    }
   }
 
   const parsedQs = parsed.map((c) => c.question).sort();
