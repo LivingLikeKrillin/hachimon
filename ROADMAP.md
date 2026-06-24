@@ -170,12 +170,12 @@ SM-2에서 FSRS로의 전환을 검토하고, Obsidian과의 통합을 강화한
 - [x] SM-2 → FSRS 마이그레이션 로직 — `reviewLog` 시간순 리플레이로 stability/difficulty 재구성 (`src/lib/migrate.ts`, init 시 1회 가드)
 - [~] 설정에서 알고리즘 선택 (SM-2 / FSRS) — **완전 전환 결정으로 대체(비목표)**. 대신 목표 기억 유지율(retention) 슬라이더 노출.
 
-### 5-2. Kotlin CLI 파서
+### 5-2. CLI 파서 (완료 — Node/TS, parseVault 재사용)
 
-- [ ] `/cli` 디렉토리 셋업 (Kotlin + GraalVM)
-- [ ] Obsidian 볼트 파싱 규칙 구현
-- [ ] `hachimon-cli parse` 명령어
-- [ ] GraalVM native image 빌드
+- [x] `scripts/parse-vault.ts` — 볼트 디렉토리 재귀 파싱 → cards.json (`parseArgs`·`collectMarkdownFiles`·`run`)
+- [x] `npm run parse -- <vault> -o public/cards.json` 명령어 (`tsx` 실행)
+- [x] `tsconfig.scripts.json`로 타입체크, `build`에 포함
+- [~] Kotlin/GraalVM — **미채택**. `src/lib/obsidian.ts`(parseVault)가 이미 단일 진실원천이라, in-app·CLI·(향후)플러그인 3중 중복을 피하려 Node/TS 채택. "Obsidian 운용 전제"(생태계가 TS)에도 부합.
 
 ### 5-3. Obsidian 플러그인
 
