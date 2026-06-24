@@ -235,6 +235,14 @@ export async function setSetting<T>(key: string, value: T): Promise<void> {
   await db.put('settings', { key, value: JSON.stringify(value) });
 }
 
+const DEFAULT_RETENTION = 0.9;
+
+/** 사용자 설정의 목표 기억 유지율(없으면 0.9). FSRS 스케줄러 opts로 사용. */
+export async function getRequestRetention(): Promise<number> {
+  const s = await getSetting<{ requestRetention?: number }>('appSettings', {});
+  return s.requestRetention ?? DEFAULT_RETENTION;
+}
+
 // 마스터 기준: Review 상태 && stability ≥ 30일
 const MASTERY_STABILITY = 30;
 

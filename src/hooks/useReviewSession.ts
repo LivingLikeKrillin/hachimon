@@ -1,7 +1,8 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Card, Schedule, Quality } from '@/types';
 import { applyRating, previewIntervals } from '@/lib/fsrs';
 import { getDB } from '@/lib/db';
+import { getRequestRetention } from '@/lib/data';
 
 export interface ReviewResult {
   cardId: string;
@@ -32,6 +33,8 @@ export function useReviewSession(initialCards: (Card & { schedule: Schedule })[]
   const [finished, setFinished] = useState(false);
   const startTime = useRef(Date.now());
   const sessionId = useRef(crypto.randomUUID());
+  const retention = useRef(0.9);
+  useEffect(() => { getRequestRetention().then((r) => { retention.current = r; }); }, []);
 
   const currentCard = initialCards[currentIndex] ?? null;
   const progress = initialCards.length > 0 ? (currentIndex / initialCards.length) : 0;
@@ -46,7 +49,7 @@ export function useReviewSession(initialCards: (Card & { schedule: Schedule })[]
     const db = await getDB();
 
     // Apply FSRS rating
-    const updated = applyRating(currentCard.schedule, quality);
+    const updated = applyRating(currentCard.schedule, quality, new Date(), { requestRetention: retention.current });
     await db.put('schedules', updated);
 
     // Log review
@@ -104,7 +107,7 @@ export function useReviewSession(initialCards: (Card & { schedule: Schedule })[]
   // Interval preview for rating buttons
   const getNextInterval = useCallback((quality: Quality): string => {
     if (!currentCard) return '';
-    const days = previewIntervals(currentCard.schedule)[quality];
+    const days = previewIntervals(currentCard.schedule, new Date(), { requestRetention: retention.current })[quality];
     if (days <= 1) return '1일';
     if (days < 30) return `${days}일`;
     if (days < 365) return `${Math.round(days / 30)}개월`;

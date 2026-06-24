@@ -5,8 +5,7 @@ export interface AppSettings {
   dailyNew: number;
   dailyReview: number;
   sessionSize: number;
-  initialEF: number;
-  minEF: number;
+  requestRetention: number;
   reminderEnabled: boolean;
   reminderHour: number; // 0~23
 }
@@ -15,8 +14,7 @@ const DEFAULTS: AppSettings = {
   dailyNew: 10,
   dailyReview: 50,
   sessionSize: 15,
-  initialEF: 2.5,
-  minEF: 1.3,
+  requestRetention: 0.9,
   reminderEnabled: false,
   reminderHour: 9,
 };
