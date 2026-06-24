@@ -131,7 +131,7 @@ PWA로서 오프라인에서도 동작하게 한다.
 ### 4-1. Stats 실데이터 연동
 
 - [x] 총 복습 횟수: reviewLog 전체 count
-- [x] 마스터 카드 수: easeFactor >= 2.5 && repetitions >= 5
+- [x] 마스터 카드 수: state === Review && stability >= 30 (FSRS 전환 후 재정의)
 - [x] 평균 정답률: (Good+Easy) / 전체 reviewLog
 - [x] 20주 히트맵: reviewLog.reviewedAt 기준 일별 집계 (`src/lib/stats.ts` buildHeatmap)
 - [x] 30일 바 차트: 최근 30일 일별 복습량 (`src/lib/stats.ts` buildDailyVolume)
@@ -164,11 +164,11 @@ PWA로서 오프라인에서도 동작하게 한다.
 
 SM-2에서 FSRS로의 전환을 검토하고, Obsidian과의 통합을 강화한다.
 
-### 5-1. FSRS 전환 검토
+### 5-1. FSRS 전환 (완료 — SM-2 완전 폐기)
 
-- [ ] FSRS 알고리즘 구현 (`src/lib/fsrs.ts`)
-- [ ] SM-2 → FSRS 마이그레이션 로직 (기존 스케줄 변환)
-- [ ] 설정에서 알고리즘 선택 (SM-2 / FSRS)
+- [x] FSRS 알고리즘 구현 — `ts-fsrs`(FSRS-6) 도입, `src/lib/fsrs.ts`. 일 단위 복습 모델에 맞춰 short-term step 비활성화.
+- [x] SM-2 → FSRS 마이그레이션 로직 — `reviewLog` 시간순 리플레이로 stability/difficulty 재구성 (`src/lib/migrate.ts`, init 시 1회 가드)
+- [~] 설정에서 알고리즘 선택 (SM-2 / FSRS) — **완전 전환 결정으로 대체(비목표)**. 대신 목표 기억 유지율(retention) 슬라이더 노출.
 
 ### 5-2. Kotlin CLI 파서
 

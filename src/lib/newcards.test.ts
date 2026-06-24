@@ -13,7 +13,10 @@ function card(id: string, tier: Tier, deck = 'd'): Card {
 }
 
 function sched(cardId: string, lastReviewedAt: string | null): Schedule {
-  return { cardId, easeFactor: 2.5, interval: 0, repetitions: 0, nextReviewAt: now.toISOString(), lastReviewedAt };
+  return {
+    cardId, stability: 0, difficulty: 5, state: 0, reps: 0, lapses: 0,
+    elapsedDays: 0, scheduledDays: 0, nextReviewAt: now.toISOString(), lastReviewedAt,
+  };
 }
 
 function rl(cardId: string, reviewedAt: string): ReviewLog {

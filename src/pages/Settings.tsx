@@ -28,10 +28,12 @@ interface SliderProps {
   unit: string;
   accent: string;
   fill: string;
+  step?: number;
+  format?: (v: number) => string;
   onChange: (v: number) => void;
 }
 
-function SliderSetting({ label, value, min, max, unit, accent, fill, onChange }: SliderProps) {
+function SliderSetting({ label, value, min, max, unit, accent, fill, step, format, onChange }: SliderProps) {
   const pct = ((value - min) / (max - min)) * 100;
   return (
     <div>
@@ -39,7 +41,7 @@ function SliderSetting({ label, value, min, max, unit, accent, fill, onChange }:
         <span className="text-[15px] font-medium text-[#ECEEF2]">{label}</span>
         <span className="font-num text-[13px] text-[#5D636F]">
           <span className="text-[19px] font-semibold" style={{ color: accent }}>
-            {value % 1 !== 0 ? value.toFixed(1) : value}
+            {format ? format(value) : (value % 1 !== 0 ? value.toFixed(1) : value)}
           </span>
           {unit && <> {unit}</>}
         </span>
@@ -48,15 +50,15 @@ function SliderSetting({ label, value, min, max, unit, accent, fill, onChange }:
         type="range"
         min={min}
         max={max}
-        step={max <= 3 ? 0.1 : 1}
+        step={step ?? (max <= 3 ? 0.1 : 1)}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full"
         style={{ background: `linear-gradient(to right, transparent 0%, transparent ${pct}%, var(--track) ${pct}%, var(--track) 100%), ${fill}`, backgroundClip: 'padding-box' }}
       />
       <div className="flex justify-between mt-[9px]">
-        <span className="text-[12px] text-[#5D636F]">{min}{unit}</span>
-        <span className="text-[12px] text-[#5D636F]">{max}{unit}</span>
+        <span className="text-[12px] text-[#5D636F]">{format ? format(min) : `${min}${unit}`}</span>
+        <span className="text-[12px] text-[#5D636F]">{format ? format(max) : `${max}${unit}`}</span>
       </div>
     </div>
   );
@@ -136,19 +138,24 @@ export default function Settings() {
         </Card>
       </div>
 
-      {/* SM-2 params */}
+      {/* FSRS params */}
       <div className="animate-up stagger-1">
-        <SectionLabel upper>SM-2 파라미터</SectionLabel>
+        <SectionLabel upper>FSRS 파라미터</SectionLabel>
         <Card>
           <CardContent className="p-5">
-            <SliderSetting label="초기 Ease Factor" value={settings.initialEF} min={1.3} max={3.0} unit="" accent="#9A90D4" fill={PURPLE_FILL} onChange={(v) => update({ initialEF: v })} />
-            <Divider />
-            <SliderSetting label="최소 Ease Factor" value={settings.minEF} min={1.0} max={2.0} unit="" accent="#9A90D4" fill={PURPLE_FILL} onChange={(v) => update({ minEF: v })} />
+            <SliderSetting
+              label="목표 기억 유지율"
+              value={settings.requestRetention}
+              min={0.8} max={0.97} step={0.01}
+              unit="" accent="#9A90D4" fill={PURPLE_FILL}
+              format={(v) => `${Math.round(v * 100)}%`}
+              onChange={(v) => update({ requestRetention: v })}
+            />
           </CardContent>
         </Card>
         <div className="flex items-start gap-2 mt-2.5 px-1">
           <Info size={13} className="text-[#5D636F] mt-0.5 shrink-0" />
-          <p className="text-[12px] text-[#5D636F] leading-relaxed">Ease Factor가 높을수록 복습 간격이 빠르게 늘어납니다. 기본값 2.5를 권장합니다.</p>
+          <p className="text-[12px] text-[#5D636F] leading-relaxed">목표 기억 유지율이 높을수록 복습 간격이 짧아지고 더 자주 복습합니다. 기본값 90%를 권장합니다.</p>
         </div>
       </div>
 

@@ -14,7 +14,8 @@ import {
 } from './stats';
 import { countIntroducedToday, selectNewCards } from './newcards';
 import { buildExport, type BackupData } from './backup';
-import { createInitialSchedule } from './sm2';
+import { createInitialSchedule } from './fsrs';
+import { State } from 'ts-fsrs';
 
 const DEFAULT_DAILY_NEW = 10;
 
@@ -234,9 +235,16 @@ export async function setSetting<T>(key: string, value: T): Promise<void> {
   await db.put('settings', { key, value: JSON.stringify(value) });
 }
 
-// 마스터 기준 (ROADMAP): EF ≥ 2.5 && repetitions ≥ 5
-const MASTERY_EF = 2.5;
-const MASTERY_REP = 5;
+const DEFAULT_RETENTION = 0.9;
+
+/** 사용자 설정의 목표 기억 유지율(없으면 0.9). FSRS 스케줄러 opts로 사용. */
+export async function getRequestRetention(): Promise<number> {
+  const s = await getSetting<{ requestRetention?: number }>('appSettings', {});
+  return s.requestRetention ?? DEFAULT_RETENTION;
+}
+
+// 마스터 기준: Review 상태 && stability ≥ 30일
+const MASTERY_STABILITY = 30;
 
 export interface MasteryStats {
   mastered: number;
@@ -244,7 +252,7 @@ export interface MasteryStats {
 }
 
 function isMastered(s: Schedule): boolean {
-  return s.easeFactor >= MASTERY_EF && s.repetitions >= MASTERY_REP;
+  return s.state === State.Review && s.stability >= MASTERY_STABILITY;
 }
 
 /** 전체 마스터리 — 마스터한 카드 수 / 전체 카드 수 */
@@ -311,13 +319,13 @@ export async function getForgeCards(
 
   const weakness = (c: Card): number => {
     const s = schedMap.get(c.id);
-    const ef = s?.easeFactor ?? 2.5;
-    const rep = s?.repetitions ?? 0;
+    const difficulty = s?.difficulty ?? 5; // 1~10, 높을수록 약함
+    const reps = s?.reps ?? 0;
     return (
-      (stumbles.get(c.id) || 0) +        // 가장 강한 약점 신호
-      Math.max(0, 2.5 - ef) +            // EF 부족
-      (rep === 0 ? 0.5 : 0) +            // 미학습 보정
-      Math.random() * 0.3               // 동점 흔들기
+      (stumbles.get(c.id) || 0) +
+      (difficulty - 1) / 9 +
+      (reps === 0 ? 0.5 : 0) +
+      Math.random() * 0.3
     );
   };
 

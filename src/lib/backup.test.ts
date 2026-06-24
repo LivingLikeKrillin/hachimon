@@ -4,9 +4,13 @@ import { buildExport, EXPORT_FORMAT, EXPORT_VERSION, type SettingRow } from './b
 
 const schedule: Schedule = {
   cardId: 'c1',
-  easeFactor: 2.5,
-  interval: 6,
-  repetitions: 2,
+  stability: 6,
+  difficulty: 5,
+  state: 2,
+  reps: 2,
+  lapses: 0,
+  elapsedDays: 0,
+  scheduledDays: 6,
   nextReviewAt: '2026-06-30T00:00:00.000Z',
   lastReviewedAt: '2026-06-24T00:00:00.000Z',
 };
