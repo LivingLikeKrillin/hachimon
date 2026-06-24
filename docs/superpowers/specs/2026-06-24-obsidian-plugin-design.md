@@ -62,7 +62,7 @@ export interface SerializeResult {
 
 export function serializeCards(files: VaultFile[], version: string): SerializeResult;
 ```
-- 중복 basename은 throw가 아니라 `warnings`에 수집(호출부가 Notice로 표시).
+- 중복 basename은 throw가 아니라 `warnings`에 수집(호출부가 Notice로 표시). (CLI의 `warnDuplicateBasenames`와 동일 규칙을 여기서 재구현 — "단일 진실원천"은 *파싱*(`parseVault`)에 한정하고, 경고는 각 진입점이 자체 보유한다. 수용 가능한 DRY 절충.)
 - 카드 0장이면 throw(빈 배포 방지) — 호출부가 catch해 Notice.
 
 ## 파서 재사용
@@ -71,12 +71,12 @@ export function serializeCards(files: VaultFile[], version: string): SerializeRe
 
 ## 데이터 흐름 (main.ts)
 
-1. 명령(`Generate cards.json`) 또는 리본 클릭 실행.
-2. 설정 `outputPath`(절대 경로)가 비어 있으면 `new Notice(...)` 에러 후 종료.
-3. `this.app.vault.getMarkdownFiles()` → 각 `TFile`을 `await this.app.vault.cachedRead(file)`로 읽어 `{ name: file.name, content }`로 매핑. `file.name`은 basename(예: `Spring.md`) — CLI/인앱과 동일한 slug/id 규칙.
+1. 명령(`Generate cards.json`) 또는 리본 클릭(아이콘 `download`) 실행.
+2. 설정 `outputPath` 검증: 비어 있거나 `path.isAbsolute(outputPath)`가 false면 안내 `new Notice(...)` 에러 후 종료.
+3. `this.app.vault.getMarkdownFiles()` → 각 `TFile`을 `await this.app.vault.read(file)`로 읽어 `{ name: file.name, content }`로 매핑. **`read`(디스크 최신) 사용** — `cachedRead`는 캐시라 방금 쓴 내용이 누락될 수 있어 export엔 부적합. `file.name`은 basename(예: `Spring.md`) — CLI/인앱과 동일한 slug/id 규칙.
 4. `serializeCards(files, new Date().toISOString())`.
 5. `warnings`가 있으면 각각 Notice/`console.warn`.
-6. Node `fs`: `mkdirSync(path.dirname(outputPath), { recursive: true })` 후 `writeFileSync(outputPath, result.json)`.
+6. Node `fs`: `mkdirSync(path.dirname(outputPath), { recursive: true })` 후 `writeFileSync(outputPath, result.json)`. (기존 파일은 무조건 덮어쓴다 — 확인 대화 없음.)
 7. `new Notice(\`✓ ${decks} decks / ${cards} cards → ${outputPath}\`)`.
 8. 전체를 try-catch로 감싸 실패 시 `new Notice(\`✗ ${message}\`)`.
 
@@ -108,7 +108,7 @@ export function serializeCards(files: VaultFile[], version: string): SerializeRe
 - `esbuild.config.mjs` + npm script `"build:plugin": "node obsidian-plugin/esbuild.config.mjs"`.
 - devDependency 추가: `obsidian`(타입), `builtin-modules`. `esbuild`는 현재 transitive(0.28.1)지만 **명시적 devDependency로 추가**(transitive 의존 금지).
 - 플러그인 전용 `tsconfig.json`(types:["obsidian"], CJS/ES2018, DOM lib). 독립 체크 `"typecheck:plugin": "tsc -p obsidian-plugin/tsconfig.json"` (scripts와 동일하게 root references 밖, composite 충돌 회피). TS ~6.0.2의 `baseUrl` 사용 시 `ignoreDeprecations: "6.0"` 필요(별칭이 필요 없으면 baseUrl 자체를 안 써도 됨 — serialize.ts는 상대 import만 하므로 별칭 불필요).
-- 앱 `vite build`와 무관. `main.js`는 빌드 산출물 — `.gitignore`에 추가할지 여부는 구현 시 결정(개인 배포라 커밋해도 무방하나 기본은 무시 권장).
+- 앱 `vite build`와 무관. `main.js`는 빌드 산출물이지만 **repo에 커밋한다** — 개인 배포라 사용자가 빌드 단계 없이 `manifest.json` + `main.js`만 `.obsidian/plugins/hachimon/`로 복사해 설치할 수 있게. (코드 변경 시 `build:plugin` 후 재커밋.)
 
 ## 테스트 전략
 
@@ -116,6 +116,7 @@ export function serializeCards(files: VaultFile[], version: string): SerializeRe
 - 유효 노트 1~2개(`## Self-Test Anchors`/`#flashcard/…`/`### Tier`/`Q::A`) → `decks`/`cards` 카운트와 `json`이 유효 스키마(parse 후 version/decks/cards).
 - 카드 0장 → throw.
 - 동일 basename 2개 → `warnings`에 항목 수집(throw 아님).
+- **출력 parity**: `serializeCards(files, v).json`이 `JSON.stringify(parseVault(files, v), null, 2) + '\n'`와 동일함을 단언(CLI와 바이트 동일 보장, 회귀 가드).
 - `serialize.ts`는 Obsidian 미의존이라 vitest 기본 include로 잡히고 그대로 통과.
 
 ### 수동 검증 (Obsidian 라이프사이클)
@@ -135,7 +136,7 @@ export function serializeCards(files: VaultFile[], version: string): SerializeRe
 | `obsidian-plugin/esbuild.config.mjs` | 신규 |
 | `obsidian-plugin/tsconfig.json` | 신규 |
 | `package.json` | `obsidian`·`builtin-modules`·`esbuild` devDep, `build:plugin`·`typecheck:plugin` 스크립트 |
-| `.gitignore` | `obsidian-plugin/main.js` 무시(권장) |
+| `obsidian-plugin/main.js` | 빌드 산출물 — 커밋(설치 편의) |
 | `docs/` | 플러그인 설치·사용 가이드 |
 | `ROADMAP.md` | 5-3 갱신 |
 | `src/lib/obsidian.ts` | 변경 없음 (재사용) |
