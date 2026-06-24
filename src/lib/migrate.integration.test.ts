@@ -21,6 +21,8 @@ function reviewLog(cardId: string, quality: number, reviewedAt: string) {
 }
 
 beforeEach(async () => {
+  // 스토어를 비워 격리한다. deleteDB로 바꾸지 말 것 — db.ts가 dbInstance 싱글톤을
+  // 캐시하므로 DB를 지우면 닫힌 핸들을 계속 반환해 이후 테스트가 깨진다.
   const db = await getDB();
   await Promise.all([
     db.clear('cards'),
