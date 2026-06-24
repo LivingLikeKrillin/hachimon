@@ -97,6 +97,7 @@ created: <ISO>
 - `q`에 이미 `?`가 있으면 중복 추가 금지(끝이 `?`가 아니면 1개 부여). `::` 앞뒤 공백은 파서 규칙에 맞춤.
 - 답변이 멀티라인이면 다음 카드/티어/헤딩 전까지 그대로 둔다(파서의 멀티라인 규칙과 호환).
 - 빈 티어는 해당 `### Tier` 헤딩을 생략한다(빈 헤딩으로 인한 파싱 노이즈 방지).
+- **slug/카드ID 유일성 범위**: draft 파일 `<slug>.md`의 유일성은 `<drafts-dir>` 내부 한정(§7의 `-2`/`-3` 회피). 한편 `parseVault`는 카드 ID를 **파일 basename 기준**으로 생성하므로(`obsidian.ts` slugify), 서로 다른 덱이라도 제목이 동일 slug로 떨어지면 vault 빌드 시점에 카드 ID 접두가 충돌할 수 있다. 이는 기존 `parse-vault.ts`의 `warnDuplicateBasenames` 경고 범위이며 본 도구가 새로 만드는 문제는 아니다(범위 외, 메모만).
 
 ### 4.4 검증 게이트
 
@@ -127,7 +128,7 @@ Usage: inbox <inbox-dir> [options]
 
 - SDK: `@anthropic-ai/sdk`(TypeScript). 클라이언트는 env에서 키 자동 해석.
 - **호출①(structure+classify)**: `client.messages.parse()` + `zodOutputFormat(StructureResult)`. 기본 효율 위해 thinking 미설정 가능(단순 추출/분류). `max_tokens` ~16000.
-- **호출②(quiz)**: `thinking: { type: "adaptive" }` + structured output(`QuizResult`). 멀티 카드·티어 루브릭 추론 필요. 큰 출력 가능성에 대비해 **streaming + `.finalMessage()`** 또는 충분한 `max_tokens`. 우선 비스트리밍 16000으로 시작하고, 필요 시 스트리밍 전환.
+- **호출②(quiz)**: `client.messages.parse()` + `zodOutputFormat(QuizResult)`, `thinking: { type: "adaptive" }`, `max_tokens` ~16000(비스트리밍). 멀티 카드·티어 루브릭 추론이 필요해 호출①보다 무겁다. `parse()`는 스트리밍과 결합하지 않으므로, 출력이 16000을 넘쳐 `stop_reason: "max_tokens"`가 나오면 `max_tokens`를 올리거나 노트를 분할한다(현재 범위에선 16000 고정으로 시작, 후속 튜닝).
 - 모델 ID는 `claude-opus-4-8` 정확 문자열(날짜 접미사 금지). `--model`로 override.
 - 에러: SDK 타입 예외 분기(`RateLimitError` 등은 재시도 가능 안내, 그 외 노트 단위 실패 처리). 노트별 try/catch로 한 건 실패가 전체를 막지 않게.
 
@@ -146,7 +147,7 @@ Usage: inbox <inbox-dir> [options]
 
 ## 8. 의존성 변경
 
-- 추가(devDependencies): `@anthropic-ai/sdk`, `zod`.
+- 추가: `zod`는 **dependencies**(런타임 — `src/lib/forge/schema.ts`가 임포트, app tsconfig가 컴파일 대상에 포함). `@anthropic-ai/sdk`는 **devDependencies**(CLI 전용 — `scripts/inbox.ts`만 `tsx`로 사용, 앱 번들 미포함).
 - `package.json` scripts: `"inbox": "tsx scripts/inbox.ts"`.
 - `tsconfig.scripts.json` include는 이미 `scripts/**/*.ts` + 임포트되는 `src/lib/forge/*`를 커버(임포트 그래프로 포함). DOM lib 불필요(순수 Node).
 - `scripts/parse-vault.ts` `EXCLUDE_DIRS`에 `_forge-drafts`, `inbox` 추가.
@@ -157,8 +158,8 @@ Usage: inbox <inbox-dir> [options]
 - `schema.test.ts` — zod 파싱 성공/실패(필드 누락·타입 오류 거부).
 - `prompts.test.ts` — 빌더가 덱 목록·티어 루브릭·노트 본문을 프롬프트에 포함.
 - `decks.test.ts` — cards.json/vault에서 유니크 덱 경로 추출, 중복 제거, 정렬.
-- `assemble.test.ts` — 조립 결과가 `parseVault`로 **라운드트립**되어 카드가 추출됨(핵심 게이트); `?` 중복 방지; 빈 티어 헤딩 생략; slug 생성.
-- `inbox.args.test.ts` — CLI 인자 파서(기본값, 플래그, 값 누락 시 usage 에러).
+- `assemble.test.ts` — 조립 결과가 **실제 `parseVault`(스텁 아님)** 로 **라운드트립**되어 카드가 추출됨(핵심 게이트); `?` 중복 방지; 빈 티어 헤딩 생략; slug 생성.
+- `inbox.args.test.ts` — CLI 인자 파서(기본값, 플래그, 값 누락 시 usage 에러). 기존 `scripts/parse-vault.ts`의 `parseArgs`(값 요구 플래그는 USAGE throw) 형태를 그대로 재사용해 일관성 유지.
 
 수동 검증: 샘플 인박스 파일 1~2개로 `--dry-run` 실행해 실제 Claude 출력이 게이트를 통과하는지 확인(키 필요, 사용자 환경).
 
