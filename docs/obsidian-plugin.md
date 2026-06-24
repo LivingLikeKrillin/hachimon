@@ -34,7 +34,8 @@ C:/Users/you/Desktop/.../hachimon/public/cards.json
 ## 사용
 
 - 왼쪽 리본의 **다운로드 아이콘** 클릭, 또는 명령 팔레트(`Ctrl/Cmd+P`)에서 **`Generate cards.json`** 실행.
-- 성공하면 `✓ N decks / M cards → <경로>` 알림이 뜨고 해당 경로에 `cards.json`이 작성됩니다.
+- 성공하면 `✓ N decks / M cards / 이미지 K장 → <경로>` 알림이 뜨고 해당 경로에 `cards.json`이 작성됩니다.
+- 답변 속 이미지(`![[img.png]]` / `![](img.png)`)는 볼트에서 찾아 자동 인라인됩니다 — 가로 800px 리사이즈 + WebP(q80)로 최적화해 base64로 박아 넣고(SVG는 벡터 그대로), 외부 `http(s)·data:` URL은 건드리지 않습니다. 같은 basename의 이미지가 여럿이면 첫 매치를 씁니다. 못 찾으면 경고가 뜨고 원본 표기를 유지합니다.
 - 같은 파일명이 여러 폴더에 있으면 id 충돌 가능 경고가 뜹니다(작성은 계속됨).
 - 카드를 못 찾으면(노트 포맷 문제) 에러 알림이 뜨고 파일은 쓰지 않습니다.
 

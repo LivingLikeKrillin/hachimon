@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseVault } from '../src/lib/obsidian.ts';
-import { serializeCards } from './serialize.ts';
+import { serializeCards, parseVaultFiles, finalizeJson } from './serialize.ts';
 
 const note = (deck: string, tier: string, qa: string) =>
   ['## Self-Test Anchors', `#flashcard/${deck}`, `### ${tier}`, qa].join('\n');
@@ -37,5 +37,26 @@ describe('serializeCards', () => {
     expect(serializeCards(files, 'V1').json).toBe(
       JSON.stringify(parseVault(files, 'V1'), null, 2) + '\n',
     );
+  });
+});
+
+describe('parseVaultFiles / finalizeJson', () => {
+  it('parseVaultFiles 는 직렬화 전 data + warnings 를 반환', () => {
+    const files = [{ name: 'Spring.md', content: note('spring/core', 'Foundation', 'q?::이미지 ![[d.png]]') }];
+    const { data, warnings } = parseVaultFiles(files, 'V1');
+    expect(warnings).toEqual([]);
+    expect(data.cards).toHaveLength(1);
+    // 후처리(이미지 인라인) 가능한 가변 answer 노출
+    expect(data.cards[0].answer).toContain('![[d.png]]');
+  });
+
+  it('카드 0장이면 throw', () => {
+    expect(() => parseVaultFiles([{ name: 'e.md', content: '# 본문만' }], 'V1')).toThrow();
+  });
+
+  it('finalizeJson 은 parse→직렬화 합성과 일치', () => {
+    const files = [{ name: 'Spring.md', content: note('spring/core', 'Foundation', '전파란?::규칙.') }];
+    const { data } = parseVaultFiles(files, 'V1');
+    expect(finalizeJson(data)).toBe(serializeCards(files, 'V1').json);
   });
 });

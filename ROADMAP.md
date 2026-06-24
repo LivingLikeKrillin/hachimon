@@ -193,7 +193,8 @@ SM-2에서 FSRS로의 전환을 검토하고, Obsidian과의 통합을 강화한
 
 - [x] 답변에 이미지 첨부 — CLI가 `![[img]]`/`![](img)`를 볼트에서 해석해 base64 data URI로 인라인. 앱은 react-markdown urlTransform로 `data:image` 렌더.
 - [x] 이미지 최적화 — sharp 리사이즈(가로 800px)+WebP(q80), SVG는 벡터 passthrough. 개당 >200KB 경고.
-- [~] 플러그인/인앱 인라인 — 후속(공유 `src/lib/images.ts` 재사용). 현재는 CLI 경로만.
+- [x] 플러그인 인라인 — Obsidian 플러그인 export 시 vault 이미지를 Canvas로 최적화(가로 800px+WebP q80, SVG 벡터 passthrough)해 base64 인라인. `sharp`(네이티브)를 못 쓰는 환경이라 `src/lib/imageOptimize.ts`로 대체, 정책은 CLI와 동일. 공유 `replaceImageRefs` 재사용.
+- [~] 인앱 런타임 인라인 — **비목표**. 앱은 정적 `cards.json`만 fetch하고 vault 접근이 없어(서버리스 원칙) 인라인 주체가 아님. CLI/플러그인이 빌드 타임에 인라인.
 
 ---
 
