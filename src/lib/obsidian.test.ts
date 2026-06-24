@@ -151,3 +151,67 @@ describe('parseVault', () => {
     expect(data.cards).toHaveLength(0);
   });
 });
+
+describe('parseVault — multi-line answers', () => {
+  const wrap = (body: string) =>
+    ['## Self-Test Anchors', '#flashcard/spring/core', '### Mechanism', body].join('\n');
+
+  it('답변이 다음 카드 전까지 여러 줄로 이어진다', () => {
+    const content = wrap(
+      ['DI란?::의존성을 외부에서 주입.', '추가 설명 문단.', '', 'AOP란?::횡단 관심사 분리.'].join('\n'),
+    );
+    const { cards } = parseVault([{ name: 'n.md', content }], VERSION);
+    expect(cards).toHaveLength(2);
+    expect(cards[0].question).toBe('DI란?');
+    expect(cards[0].answer).toBe('의존성을 외부에서 주입.\n추가 설명 문단.');
+    expect(cards[1].question).toBe('AOP란?');
+    expect(cards[1].answer).toBe('횡단 관심사 분리.');
+  });
+
+  it('코드펜스를 답변에 보존하고 펜스 안 ::는 새 카드가 아니다', () => {
+    const content = wrap(
+      ['빈 생성자 주입?::', '```java', 'class A {', '  Map<String,Integer> m = Map.of("a", 1);', '}', '```'].join('\n'),
+    );
+    const { cards } = parseVault([{ name: 'n.md', content }], VERSION);
+    expect(cards).toHaveLength(1);
+    expect(cards[0].answer).toBe(
+      ['```java', 'class A {', '  Map<String,Integer> m = Map.of("a", 1);', '}', '```'].join('\n'),
+    );
+  });
+
+  it('인라인 코드 안 ::는 새 카드로 오인되지 않는다', () => {
+    const content = wrap(['질문?::설명.', '리스트의 `std::vector`를 쓴다.'].join('\n'));
+    const { cards } = parseVault([{ name: 'n.md', content }], VERSION);
+    expect(cards).toHaveLength(1);
+    expect(cards[0].answer).toBe('설명.\n리스트의 `std::vector`를 쓴다.');
+  });
+
+  it('티어 헤딩이 답변을 종료하고 티어를 전환한다', () => {
+    const content = [
+      '## Self-Test Anchors',
+      '#flashcard/x',
+      '### Foundation',
+      'q1?::a1 여러 줄',
+      '둘째 줄',
+      '### Diagnosis',
+      'q2?::a2',
+    ].join('\n');
+    const { cards } = parseVault([{ name: 'n.md', content }], VERSION);
+    expect(cards).toHaveLength(2);
+    expect(cards[0].tier).toBe('foundation');
+    expect(cards[0].answer).toBe('a1 여러 줄\n둘째 줄');
+    expect(cards[1].tier).toBe('diagnosis');
+  });
+
+  it('파일 끝의 멀티라인 답변이 flush된다', () => {
+    const content = wrap(['q?::첫 줄', '둘째 줄', '셋째 줄'].join('\n'));
+    const { cards } = parseVault([{ name: 'n.md', content }], VERSION);
+    expect(cards[0].answer).toBe('첫 줄\n둘째 줄\n셋째 줄');
+  });
+
+  it('정확한 sourceHash 회귀 가드 (NUL 구분자 유지)', () => {
+    const content = wrap(['q?::a'].join('\n'));
+    const { cards } = parseVault([{ name: 'n.md', content }], VERSION);
+    expect(cards[0].sourceHash).toBe('0ff541');
+  });
+});
