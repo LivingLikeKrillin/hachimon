@@ -20,3 +20,30 @@ describe('parseArgs', () => {
     expect(() => parseArgs(['-o', 'x.json'])).toThrow();
   });
 });
+
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { collectMarkdownFiles } from './parse-vault.ts';
+
+describe('collectMarkdownFiles', () => {
+  it('하위폴더 .md만 재귀 수집, 숨김/제외 디렉토리·비-md 무시, basename 사용', () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'vault-'));
+    try {
+      writeFileSync(path.join(root, 'a.md'), 'A');
+      mkdirSync(path.join(root, 'sub'));
+      writeFileSync(path.join(root, 'sub', 'b.md'), 'B');
+      writeFileSync(path.join(root, 'note.txt'), 'X');
+      writeFileSync(path.join(root, '.hidden.md'), 'H');
+      mkdirSync(path.join(root, '.obsidian'));
+      writeFileSync(path.join(root, '.obsidian', 'c.md'), 'C');
+
+      const files = collectMarkdownFiles(root);
+      const names = files.map((f) => f.name).sort();
+      expect(names).toEqual(['a.md', 'b.md']);
+      expect(files.find((f) => f.name === 'b.md')!.content).toBe('B');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
