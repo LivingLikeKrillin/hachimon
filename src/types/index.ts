@@ -25,11 +25,15 @@ export interface CardsData {
 
 export interface Schedule {
   cardId: string;
-  easeFactor: number;
-  interval: number;
-  repetitions: number;
-  nextReviewAt: string;
-  lastReviewedAt: string | null;
+  stability: number;
+  difficulty: number;
+  state: number;           // 0 New · 1 Learning · 2 Review · 3 Relearning
+  reps: number;
+  lapses: number;
+  elapsedDays: number;
+  scheduledDays: number;
+  nextReviewAt: string;    // = FSRS due (ISO)
+  lastReviewedAt: string | null; // = FSRS last_review (ISO), New이면 null
 }
 
 export interface ReviewLog {

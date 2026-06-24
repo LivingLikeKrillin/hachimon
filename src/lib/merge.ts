@@ -1,6 +1,6 @@
 import type { CardsData } from '@/types';
 import { getDB } from './db';
-import { createInitialSchedule } from './sm2';
+import { createInitialSchedule } from './fsrs';
 
 export async function mergeCards(data: CardsData): Promise<void> {
   const db = await getDB();

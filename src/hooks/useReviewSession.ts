@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import type { Card, Schedule, Quality } from '@/types';
-import { applyRating } from '@/lib/sm2';
+import { applyRating, previewIntervals } from '@/lib/fsrs';
 import { getDB } from '@/lib/db';
 
 export interface ReviewResult {
@@ -104,11 +104,11 @@ export function useReviewSession(initialCards: (Card & { schedule: Schedule })[]
   // Interval preview for rating buttons
   const getNextInterval = useCallback((quality: Quality): string => {
     if (!currentCard) return '';
-    const preview = applyRating(currentCard.schedule, quality);
-    if (preview.interval === 1) return '1일';
-    if (preview.interval < 30) return `${preview.interval}일`;
-    if (preview.interval < 365) return `${Math.round(preview.interval / 30)}개월`;
-    return `${(preview.interval / 365).toFixed(1)}년`;
+    const days = previewIntervals(currentCard.schedule)[quality];
+    if (days <= 1) return '1일';
+    if (days < 30) return `${days}일`;
+    if (days < 365) return `${Math.round(days / 30)}개월`;
+    return `${(days / 365).toFixed(1)}년`;
   }, [currentCard]);
 
   return {
