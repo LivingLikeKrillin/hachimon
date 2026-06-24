@@ -65,12 +65,14 @@ interface CliArgs {
    - **basename 사용**(경로 아님) — 인앱 import와 동일한 slug/id 규칙 유지(단일 진실원천).
    - 제외: `.obsidian/`, `.trash/`, `node_modules/`, 그리고 `.`로 시작하는 숨김 디렉토리.
 3. `parseVault(files, version)` → `CardsData`.
-4. `fs.writeFileSync(outPath, JSON.stringify(data, null, 2) + '\n')` — 기존 `public/cards.json`과 동일한 pretty 포맷.
+4. outPath 부모 디렉토리가 없으면 `fs.mkdirSync(dir, { recursive: true })`로 생성한 뒤 `fs.writeFileSync(outPath, JSON.stringify(data, null, 2) + '\n')`로 표준 2-스페이스 pretty JSON을 쓴다.
 5. 콘솔 요약: `✓ N decks / M cards → <outPath>`.
+
+> **출력 포맷 주의:** 현재 `public/cards.json`은 손으로 작성한 compact 포맷(덱/카드 한 줄, 인라인 배열)이다. CLI는 **표준 `JSON.stringify(…, 2)`**를 쓰므로 공백 레이아웃은 기존 샘플과 다르다. 이는 무해하다 — 앱은 `fetch` 후 `JSON.parse`만 하므로 공백은 기능에 영향이 없다. CLI를 실제 vault에 처음 돌리면 샘플이 표준 포맷으로 덮어써진다. (줄바꿈은 repo의 `core.autocrlf`로 정규화되므로 파일 바이트 비교 대상이 아니다.)
 
 ## 인앱 import와의 일치성 (핵심 불변식)
 
-CLI와 인앱 import가 **동일한 `parseVault`**를 쓰므로 id·sourceHash·덱 집계가 바이트 단위로 동일하다. CLI로 구운 cards.json과 인앱 import 결과가 충돌 없이 머지된다. 파싱 규칙 변경 시 `obsidian.ts` 한 곳만 고치면 양쪽 + 향후 플러그인까지 반영된다.
+CLI와 인앱 import가 **동일한 `parseVault`**를 쓰므로 파싱 결과 *데이터* — id·sourceHash·덱 집계 — 가 동일하다. (불변식은 파싱된 객체의 동일성이지 파일 공백 포맷이 아니다. 머지 로직은 `JSON.parse`된 객체만 보므로 포맷 차이는 무관하다.) CLI로 구운 cards.json과 인앱 import 결과가 충돌 없이 머지된다. 파싱 규칙 변경 시 `obsidian.ts` 한 곳만 고치면 양쪽 + 향후 플러그인까지 반영된다.
 
 ### 알려진 한계 (인앱과 공유)
 - 서로 다른 폴더의 동일 basename 파일은 slug가 같아 id가 충돌할 수 있다. 인앱 import도 동일하게 동작하므로 새로 생기는 문제는 아니다. 스펙·문서에 명시한다.
@@ -83,6 +85,10 @@ CLI와 인앱 import가 **동일한 `parseVault`**를 쓰므로 id·sourceHash·
 | positional 인자 누락 | usage 출력 + `exit(1)` |
 | `.md` 0개 또는 카드 0장 | 경고 + `exit(1)` (빈 cards.json 배포 방지) |
 | 파일 읽기 실패 | 해당 파일 경로와 함께 에러 + `exit(1)` |
+| outPath 부모 디렉토리 없음 | `mkdirSync(recursive)`로 생성 (에러 아님) |
+| 동일 basename 중복 파일 | **경고 출력**(실패는 아님) — id가 충돌할 수 있음을 알림. vault 재귀 walk에선 인앱보다 발생 가능성이 높다 |
+
+`--version` 값은 검증 없이 그대로 전달된다(자유 문자열, 배포 마커 용도).
 
 `main`은 전체를 try-catch로 감싸 예기치 못한 오류도 비정상 종료 코드로 보고한다.
 
@@ -95,8 +101,11 @@ CLI와 인앱 import가 **동일한 `parseVault`**를 쓰므로 id·sourceHash·
 
 ### 타입체크 통합
 
-- `tsconfig.node.json`(node 컨텍스트, `types: ["node"]`)의 `include`에 `scripts/**/*.ts` 추가.
+- `scripts/`는 이미 존재한다(`generate-icons.mjs` — `.mjs`라 타입체크 대상 아님). 새 `.ts` 스크립트만 타입체크에 편입한다.
+- `tsconfig.node.json`(node 컨텍스트, `types: ["node"]`)의 `include`를 `["vite.config.ts", "scripts/**/*.ts"]`로 확장.
 - `tsconfig.node.json`에 `@/*` 별칭 추가(`baseUrl: "."`, `paths: { "@/*": ["./src/*"] }`) — 스크립트가 import하는 `obsidian.ts`의 `import type ... from '@/types'`를 `tsc`가 해석하도록.
+- 테스트 파일(`scripts/parse-vault.test.ts`)도 include에 걸리지만, `obsidian.test.ts`와 동일하게 `import { describe, it, expect } from 'vitest'`로 명시 import하므로 vitest 전역 타입 없이도 `tsc`가 통과한다.
+- **다중 프로젝트 충돌 대비:** `tsc -b`에서 `obsidian.ts`가 app·node 두 프로젝트에 동시에 끌려와 충돌하면(예: "file is in multiple projects"), `scripts/`용 별도 `tsconfig.scripts.json`을 만들어 root에서 참조하는 방식으로 분리한다. 구현 시 `tsc -b` 결과로 판단한다.
 - `npm run build`(=`tsc -b && vite build`)와 `tsc -b`가 스크립트를 타입체크하게 된다.
 
 ## 테스트 전략
