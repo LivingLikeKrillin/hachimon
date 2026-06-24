@@ -158,7 +158,7 @@ async function run(args: InboxArgs): Promise<RunResult> {
         created,
       );
 
-      const v = validateDraft(md, quiz, created);
+      const v = validateDraft(md, quiz);
       if (!v.ok) {
         console.warn(`⚠ 보류(${v.reason}): ${file.name} — 인박스 원본 보존`);
         held++;
