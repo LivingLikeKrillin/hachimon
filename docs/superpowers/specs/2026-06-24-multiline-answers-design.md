@@ -39,6 +39,7 @@
 3. **종결자(현재 카드를 닫는 것)**: ① 다음 카드-시작 줄, ② `### 티어` 헤딩, ③ `#flashcard/…` 덱 태그, ④ 임의의 ATX 헤딩 줄(`^#{1,6}\s` — 섹션 경계), ⑤ 파일 끝(루프 종료 후 flush). (②③은 동시에 deck/tier 상태도 갱신.)
 4. **flush 시 마무리**: `answer`의 **앞뒤 빈 줄/공백만 trim**(`replace(/^\s+|\s+$/g)` 또는 동등). 내부 개행·코드펜스·리스트·빈 줄은 **보존**(react-markdown 렌더 입력). `question`이 빈 카드는 방출하지 않음(기존 동작 유지). `answer`는 빈 문자열 허용.
 5. id/sourceHash: 기존과 동일 — `id = {slug}-{tierAbbr}{seq}`(티어별 순번), `sourceHash = hashContent(\`${question}\0${answer}\`)`.
+   - ⚠️ **`hashContent(...)` 호출 줄은 그대로 둔다(수정 금지).** 현재 소스(`obsidian.ts:101`)는 question과 answer 사이에 **리터럴 NUL 바이트(0x00)** 를 구분자로 쓴다(파일이 binary로 인식될 정도). Read/grep은 이 NUL을 공백처럼 보여주지만 실제로는 0x00이다. 이 줄을 공백이나 다른 문자로 바꾸면 모든 카드의 sourceHash가 달라져 머지가 전 카드를 불필요하게 갱신한다. answer 누적 방식만 바꾸고 이 줄은 건드리지 않는다.
 
 ### 카드-시작 판별 (오인 방지 — 핵심)
 
@@ -64,7 +65,7 @@
 
 - 기존 단일 줄 `질문?::답변`은 그대로 동작: 카드 open 후 다음 줄이 보통 카드-시작/헤딩/EOF라 즉시 flush되어 답변은 그 줄의 `::` 뒤 텍스트.
 - 카드가 열리기 *전*(티어/덱만 있고 첫 카드 전)의 비-카드 줄은 어떤 answer에도 들어가지 않고 무시됨 → 기존 "메모 줄 무시" 동작 유지.
-- **기존 `obsidian.test.ts` 10개 케이스 전부 그대로 통과해야 한다**(회귀 가드). 특히 "splits only on the first ::"(단일 줄, 답변 내 `::`)와 "skips lines without ::"(카드 전 메모 줄).
+- **기존 `obsidian.test.ts` 9개 케이스 전부 그대로 통과해야 한다**(회귀 가드). 특히 "splits only on the first ::"(단일 줄, 답변 내 `::`)와 "skips lines without ::"(카드 전 메모 줄).
 
 ## 엣지 케이스 (테스트로 고정)
 
@@ -84,6 +85,8 @@
 
 - `src/lib/obsidian.test.ts`에 멀티라인 케이스 추가. 기존 10개는 수정 없이 유지(회귀).
 - 추가 케이스(위 표): 펜스 보존, 인라인-코드 비오인, 다문단, 연속 카드 분리, EOF flush, 티어 전환 종결, 평문 `::` 오인(문서화된 동작).
+- **카드 열린 채 `#flashcard/` 덱 전환**: 멀티라인 답변 도중 새 덱 태그가 오면 현재 카드 flush + deck 갱신(종결자 #3) 검증.
+- **정확한 sourceHash 회귀 가드**: 알려진 question/answer 쌍에 대해 sourceHash의 *정확한 값*을 단언(현재 hash 테스트는 안정/차이만 봐서 NUL→공백 같은 구분자 변경을 못 잡음). 이 테스트로 구분자 변경을 큰 소리로 실패시킨다.
 - CLI(`scripts/parse-vault.test.ts`)·플러그인(`obsidian-plugin/serialize.test.ts`)의 parity 테스트는 `parseVault`를 그대로 쓰므로 멀티라인 출력을 자동 검증.
 
 ## 문서
