@@ -63,12 +63,12 @@ describe('run', () => {
     '트랜잭션 전파란?::경계 동작 규칙.',
   ].join('\n');
 
-  it('vault를 파싱해 cards.json을 쓰고 카운트를 반환한다', () => {
+  it('vault를 파싱해 cards.json을 쓰고 카운트를 반환한다', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'vault-'));
     try {
       writeFileSync(path.join(root, 'Spring.md'), VALID);
       const outPath = path.join(root, 'out', 'cards.json');
-      const res = run({ vaultDir: root, outPath, version: 'V1' });
+      const res = await run({ vaultDir: root, outPath, version: 'V1' });
       expect(res).toEqual({ decks: 1, cards: 1 });
       const data = JSON.parse(readFileSync(outPath, 'utf-8'));
       expect(data.version).toBe('V1');
@@ -80,15 +80,54 @@ describe('run', () => {
     }
   });
 
-  it('vault 디렉토리가 없으면 throw', () => {
-    expect(() => run({ vaultDir: '/no/such/dir', outPath: 'x.json', version: 'V' })).toThrow();
+  it('vault 디렉토리가 없으면 throw', async () => {
+    await expect(run({ vaultDir: '/no/such/dir', outPath: 'x.json', version: 'V' })).rejects.toThrow();
   });
 
-  it('카드가 0장이면 throw', () => {
+  it('카드가 0장이면 throw', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'vault-'));
     try {
       writeFileSync(path.join(root, 'empty.md'), '# 본문만 있고 카드 없음');
-      expect(() => run({ vaultDir: root, outPath: path.join(root, 'o.json'), version: 'V' })).toThrow();
+      await expect(run({ vaultDir: root, outPath: path.join(root, 'o.json'), version: 'V' })).rejects.toThrow();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('이미지 임베드를 base64 webp로 인라인한다', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'vault-'));
+    try {
+      // 유효한 1x1 PNG (sharp 디코딩 가능). 명세 fixture 바이트가 libpng로 디코딩되지 않아 교체.
+      const png = Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADUlEQVQImWP4z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==',
+        'base64',
+      );
+      writeFileSync(path.join(root, 'px.png'), png);
+      writeFileSync(
+        path.join(root, 'N.md'),
+        ['## Self-Test Anchors', '#flashcard/x', '### Foundation', '그림?::![[px.png]]'].join('\n'),
+      );
+      const outPath = path.join(root, 'o.json');
+      await run({ vaultDir: root, outPath, version: 'V' });
+      const data = JSON.parse(readFileSync(outPath, 'utf-8'));
+      expect(data.cards[0].answer).toContain('data:image/webp;base64,');
+      expect(data.cards[0].answer).not.toContain('![[px.png]]');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('없는 이미지는 원본 ref를 유지한다', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'vault-'));
+    try {
+      writeFileSync(
+        path.join(root, 'N.md'),
+        ['## Self-Test Anchors', '#flashcard/x', '### Foundation', '그림?::![[missing.png]]'].join('\n'),
+      );
+      const outPath = path.join(root, 'o.json');
+      await run({ vaultDir: root, outPath, version: 'V' });
+      const data = JSON.parse(readFileSync(outPath, 'utf-8'));
+      expect(data.cards[0].answer).toContain('![[missing.png]]');
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
