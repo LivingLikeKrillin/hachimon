@@ -581,10 +581,13 @@ git commit -m "feat: migrate existing schedules to FSRS via reviewLog replay"
 
 ---
 
-### Task 5: Settings — retention 슬라이더
+### Task 5: Settings — retention 슬라이더 + 배선
+
+> **배선 갭(코드리뷰 I2 후속):** 슬라이더 값을 저장만 하고 `applyRating`/`previewIntervals`에 전달하지 않으면 **죽은 슬라이더**가 된다. 이 Task는 UI 교체 + retention을 실제 복습 경로(`useReviewSession`)까지 배선하는 것까지 포함한다.
+> (마이그레이션 리플레이는 retention과 무관 — request_retention은 stability가 아니라 간격(due)에만 영향하고, 마이그레이션된 카드는 다음 복습에서 재스케줄되므로 기본 0.9로 충분하다. Task 4는 변경 없음.)
 
 **Files:**
-- Modify: `src/hooks/useSettings.ts`, `src/pages/Settings.tsx`
+- Modify: `src/hooks/useSettings.ts`, `src/pages/Settings.tsx`, `src/lib/data.ts`, `src/hooks/useReviewSession.ts`
 
 - [ ] **Step 1: useSettings 필드 교체**
 
@@ -628,16 +631,44 @@ git commit -m "feat: migrate existing schedules to FSRS via reviewLog replay"
       </div>
 ```
 
-- [ ] **Step 4: 타입체크 + 빌드**
+- [ ] **Step 4: data.ts에 retention 헬퍼 추가**
+
+`src/lib/data.ts`에 추가 (기존 `getSetting` 활용):
+
+```ts
+const DEFAULT_RETENTION = 0.9;
+
+/** 사용자 설정의 목표 기억 유지율(없으면 0.9). FSRS 스케줄러 opts로 사용. */
+export async function getRequestRetention(): Promise<number> {
+  const s = await getSetting<{ requestRetention?: number }>('appSettings', {});
+  return s.requestRetention ?? DEFAULT_RETENTION;
+}
+```
+
+- [ ] **Step 5: useReviewSession에 retention 배선**
+
+`src/hooks/useReviewSession.ts`:
+- `import { getRequestRetention } from '@/lib/data';` 추가.
+- retention을 마운트 시 1회 로드해 ref에 보관(로드 전 기본 0.9):
+
+```ts
+  const retention = useRef(0.9);
+  useEffect(() => { getRequestRetention().then((r) => { retention.current = r; }); }, []);
+```
+(`useEffect` import 추가 필요 시 반영.)
+- `rate()`의 `applyRating(currentCard.schedule, quality)` → `applyRating(currentCard.schedule, quality, new Date(), { requestRetention: retention.current })`.
+- `getNextInterval`의 `previewIntervals(currentCard.schedule)[quality]` → `previewIntervals(currentCard.schedule, new Date(), { requestRetention: retention.current })[quality]`.
+
+- [ ] **Step 6: 타입체크 + 빌드**
 
 Run: `npx tsc -b && npm run build`
 Expected: 성공. (`settings.initialEF`/`minEF`를 참조하는 다른 곳이 없는지 확인 — 있으면 제거.)
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add -A
-git commit -m "feat: replace EF sliders with FSRS retention setting"
+git commit -m "feat: replace EF sliders with FSRS retention setting + wire to review session"
 ```
 
 ---
