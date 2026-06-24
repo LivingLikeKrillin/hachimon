@@ -4,6 +4,7 @@ import Markdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import { imageUrlTransform } from '@/lib/markdown';
 import type { Quality, Card, Schedule } from '@/types';
+import CodeBlock from '@/components/shared/CodeBlock';
 import TierBadge from '@/components/shared/TierBadge';
 import SectionLabel from '@/components/shared/SectionLabel';
 import ScreenContainer from '@/components/layout/ScreenContainer';
@@ -143,6 +144,7 @@ export default function ReviewSession({ cards, onComplete, onExit }: ReviewSessi
                       void node;
                       return <img {...props} className="max-w-full rounded-md my-2" />;
                     },
+                    pre: ({ node, children }) => <CodeBlock node={node} children={children} />,
                   }}
                 >
                   {currentCard.answer}
