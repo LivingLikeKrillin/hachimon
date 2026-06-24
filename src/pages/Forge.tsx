@@ -50,8 +50,8 @@ export default function Forge({ onStart, onExit }: ForgeProps) {
   const canStart = selDecks.size > 0 && selTiers.size > 0 && matchCount > 0 && !starting;
   const allSel = decks.length > 0 && selDecks.size === decks.length;
 
-  const toggleDeck = (id: string) => setSelDecks((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
-  const toggleTier = (t: Tier) => setSelTiers((p) => { const n = new Set(p); n.has(t) ? n.delete(t) : n.add(t); return n; });
+  const toggleDeck = (id: string) => setSelDecks((p) => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const toggleTier = (t: Tier) => setSelTiers((p) => { const n = new Set(p); if (n.has(t)) n.delete(t); else n.add(t); return n; });
   const toggleAll = () => setSelDecks(allSel ? new Set() : new Set(decks.map((d) => d.id)));
 
   const start = async () => {

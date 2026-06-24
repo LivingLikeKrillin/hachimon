@@ -24,6 +24,9 @@ export function useDueCards(limit: number = 15) {
     setLoading(false);
   }, [limit]);
 
+  // 마운트 시 1회 데이터 로드 — 의도된 fetch-on-mount 패턴.
+  // (set-state-in-effect는 async 로더의 await 이후 setState까지 전이적으로 막아 false positive)
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { refresh(); }, [refresh]);
 
   return { cards, loading, refresh };
@@ -55,6 +58,8 @@ export function useHomeStats() {
     setLoading(false);
   }, []);
 
+  // 마운트 시 1회 집계 로드 — 의도된 fetch-on-mount 패턴 (위 주석 참고).
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { refresh(); }, [refresh]);
 
   return { stats, loading, refresh };

@@ -31,10 +31,15 @@ export function useReviewSession(initialCards: (Card & { schedule: Schedule })[]
   const [flipped, setFlipped] = useState(false);
   const [results, setResults] = useState<ReviewResult[]>([]);
   const [finished, setFinished] = useState(false);
-  const startTime = useRef(Date.now());
-  const sessionId = useRef(crypto.randomUUID());
+  const startTime = useRef(0);
+  const sessionId = useRef('');
   const retention = useRef(0.9);
-  useEffect(() => { getRequestRetention().then((r) => { retention.current = r; }); }, []);
+  // 불순 함수(Date.now/randomUUID)는 렌더가 아닌 마운트 이펙트에서 호출
+  useEffect(() => {
+    startTime.current = Date.now();
+    sessionId.current = crypto.randomUUID();
+    getRequestRetention().then((r) => { retention.current = r; });
+  }, []);
 
   const currentCard = initialCards[currentIndex] ?? null;
   const progress = initialCards.length > 0 ? (currentIndex / initialCards.length) : 0;

@@ -69,7 +69,7 @@ export async function commitVaultImport(data: CardsData): Promise<VaultMeta> {
 }
 
 /** 데모 카드로 되돌리기 — vault 임포트분을 비우고 번들 샘플 복원 */
-export async function useDemoCards(): Promise<void> {
+export async function restoreDemoCards(): Promise<void> {
   await setSetting<CardSource>('cardSource', 'demo');
   await setSetting<VaultMeta | null>('vaultMeta', null);
   await initializeCards();

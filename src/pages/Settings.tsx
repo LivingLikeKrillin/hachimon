@@ -5,7 +5,7 @@ import PageLayout from '@/components/layout/PageLayout';
 import SectionLabel from '@/components/shared/SectionLabel';
 import ImportVaultModal from '@/components/settings/ImportVaultModal';
 import { useSettings } from '@/hooks/useSettings';
-import { getCardSource, getVaultMeta, useDemoCards, exportLearningData, resetLearningData, type CardSource, type VaultMeta } from '@/lib/data';
+import { getCardSource, getVaultMeta, restoreDemoCards, exportLearningData, resetLearningData, type CardSource, type VaultMeta } from '@/lib/data';
 
 function downloadJson(filename: string, data: unknown) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -77,7 +77,7 @@ export default function Settings() {
     getVaultMeta().then(setVaultMeta);
   }, []);
 
-  const revertToDemo = async () => { await useDemoCards(); window.location.reload(); };
+  const revertToDemo = async () => { await restoreDemoCards(); window.location.reload(); };
 
   const [resetOpen, setResetOpen] = useState(false);
   const [busy, setBusy] = useState(false);
