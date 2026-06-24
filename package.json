@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "parse": "tsx scripts/parse-vault.ts",
+    "inbox": "tsx scripts/inbox.ts",
     "typecheck:scripts": "tsc -p tsconfig.scripts.json",
     "build:plugin": "node obsidian-plugin/esbuild.config.mjs production",
     "typecheck:plugin": "tsc -p obsidian-plugin/tsconfig.json"
