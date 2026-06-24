@@ -19,6 +19,15 @@ describe('uniqueDeckPaths', () => {
   it('빈 덱이면 빈 배열', () => {
     expect(uniqueDeckPaths({ version: 'V', decks: [], cards: [] })).toEqual([]);
   });
+
+  it('flashcard/ 접두가 없는 id는 그대로 둔다', () => {
+    const data: CardsData = {
+      version: 'V',
+      decks: [{ id: 'misc/x', name: 'x', path: ['misc', 'x'], cardCount: 1 }],
+      cards: [],
+    };
+    expect(uniqueDeckPaths(data)).toEqual(['misc/x']);
+  });
 });
 
 describe('decksFromVault', () => {

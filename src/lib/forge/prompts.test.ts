@@ -9,9 +9,10 @@ describe('buildStructurePrompt', () => {
     expect(p).toContain('react/hooks');
   });
 
-  it('덱 목록이 비면 새 덱 제안 지시를 포함한다', () => {
+  it('덱 목록이 비면 빈 목록 표시 + 새 덱 제안 지시를 포함한다', () => {
     const p = buildStructurePrompt('내용', []);
-    expect(p.toLowerCase()).toContain('deck');
+    expect(p).toContain('(기존 덱 없음)');
+    expect(p).toContain('새 경로를 제안');
   });
 });
 
