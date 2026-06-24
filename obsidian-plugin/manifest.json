@@ -1,0 +1,9 @@
+{
+  "id": "hachimon",
+  "name": "Hachimon",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "현재 볼트의 플래시카드를 Hachimon cards.json으로 내보냅니다.",
+  "author": "LivingLikeKrillin",
+  "isDesktopOnly": true
+}

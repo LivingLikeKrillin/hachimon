@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "parse": "tsx scripts/parse-vault.ts",
-    "typecheck:scripts": "tsc -p tsconfig.scripts.json"
+    "typecheck:scripts": "tsc -p tsconfig.scripts.json",
+    "build:plugin": "node obsidian-plugin/esbuild.config.mjs production",
+    "typecheck:plugin": "tsc -p obsidian-plugin/tsconfig.json"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
@@ -37,11 +39,14 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "builtin-modules": "^5.2.0",
+    "esbuild": "^0.28.1",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "fake-indexeddb": "^6.2.5",
     "globals": "^17.4.0",
+    "obsidian": "^1.13.1",
     "playwright": "^1.61.0",
     "sharp": "^0.35.2",
     "tsx": "^4.22.4",
