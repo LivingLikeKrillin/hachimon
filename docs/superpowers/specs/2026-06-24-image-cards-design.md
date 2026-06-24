@@ -56,9 +56,10 @@ export async function replaceImageRefs(
 ): Promise<string>;
 ```
 - Obsidian 임베드 정규식: `!\[\[([^\]|]+)(?:\|([^\]]*))?\]\]`. target=그룹1(trim), alt=그룹2 또는 ''. (Obsidian의 `|` 뒤는 보통 크기/별칭 — alt로 취급.)
-- 표준 이미지 정규식: `!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)`. alt=그룹1, target=그룹2. **http(s)·data: target은 건너뛴다**(외부/이미 인라인).
-- 펜스/인라인코드 안의 이미지 문법은? 답변은 이미 파싱된 텍스트라 코드블록도 포함될 수 있음. MVP: 코드블록 안 `![[...]]`는 거의 없고, 있더라도 치환되면 곤란. → **펜스 안은 건드리지 않는다**(images.ts가 펜스 영역을 스킵). 인라인코드 안도 스킵.
-- 순수: 파일 접근 없음. 치환 문자열(데이터 URI 등)은 resolver가 만든다.
+- 표준 이미지 정규식: `!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)`. alt=그룹1, target=그룹2. (이 정규식은 `![[...]]`를 매치하지 않음 — 겹침 없음.)
+- **http(s)·data: target 제외는 `findImageRefs` 로직에서 처리**(정규식이 아님): target이 `/^(https?:|data:)/i`면 `ImageRef`로 만들지 않는다(외부/이미 인라인이므로 resolver까지 가지 않음).
+- **펜스/인라인코드 스킵은 하지 않는다(YAGNI).** SM-2 답변의 코드블록에 `![[...]]`/`![](...)` 텍스트가 들어갈 일은 사실상 없다. 코드블록 안에 이미지 문법을 예시로 적는 드문 경우만 오인되며, 이는 문서화된 수용 제약으로 둔다. (불필요한 코드영역 마스킹 회피 → images.ts를 진짜 단순하게 유지.)
+- 순수: 파일·라이브러리 접근 없음. **`images.ts`는 `react-markdown`·`sharp`를 import하지 않는다.** 치환 문자열(데이터 URI 등)은 주입된 resolver가 만든다.
 
 ### `src/lib/markdown.ts` (순수)
 
@@ -80,8 +81,11 @@ export function imageUrlTransform(url: string): string {
   - 그 외 → `sharp(abs).resize({ width: 800, withoutEnlargement: true }).webp({ quality: 80 }).toBuffer()` → `data:image/webp;base64,<b64>`
 - per-card: `card.answer = await replaceImageRefs(card.answer, async (ref) => { 파일 해석; 없으면 경고+ null(원본 유지); 있으면 optimizeToDataUri })`.
 - 결과 데이터 URI가 임계(예 200KB) 초과 시 경고(여전히 인라인).
-- `run()`을 async로 전환: parseVault(sync) → 카드별 이미지 인라인(await) → write. `main()`은 이미 async 경로이므로 await 추가.
-- `sharp` devDependency 추가.
+- `run()`을 **async로 전환**: 현재 `run`은 sync. parseVault(sync) → 카드별 이미지 인라인(await) → write. 호출부 정정:
+  - 현재 `main`은 `function main(): void`이고 `const { decks, cards } = run(args)`로 동기 호출 + 파일 끝 `if (...) main()`.
+  - 변경: `run`을 `async function run(...): Promise<{decks,cards}>`로, `main`을 `async function main(): Promise<void>`로, `const { decks, cards } = await run(args)`로. `main` 본문 전체가 try-catch라 reject되지 않음(말단 `main()` 호출은 그대로 둬도 안전).
+  - **기존 `run` 동기 테스트(`scripts/parse-vault.test.ts`)를 async로 갱신**: `expect(() => run(...)).toThrow()` → `await expect(run(...)).rejects.toThrow()`, `const res = run(...)` → `await run(...)`.
+- `sharp`는 **이미 devDependency**(`^0.35.2`, generate-icons.mjs가 사용 중)다. 추가 설치 불필요 — `import sharp from 'sharp'`만.
 
 ### 앱 렌더 (`src/pages/ReviewSession.tsx`)
 
@@ -112,7 +116,7 @@ export function imageUrlTransform(url: string): string {
 
 ## 테스트
 
-- `images.test.ts`(순수): `![[x.png]]`·`![[x.png|도식]]`·`![alt](x.png)` 탐지; 다중; 없음; http/data target 스킵; 펜스 안 스킵; resolver null→원본 유지; resolver 값→치환.
+- `images.test.ts`(순수): `![[x.png]]`·`![[x.png|도식]]`·`![alt](x.png)` 탐지; 다중; 없음; http/data target은 ref에서 제외; resolver null→원본 유지; resolver 값→치환.
 - `markdown.test.ts`(순수): `imageUrlTransform` — `data:image/png;base64,..`통과, `javascript:alert(1)` 차단(빈/안전값), `https://..` 통과.
 - `scripts/parse-vault.test.ts` 통합: 임시 vault + 1×1 PNG + `![[px.png]]` 답변 노트 → CLI 인라인 → 답변에 `data:image/webp;base64,` 포함. 미존재 이미지 → 경고+원본 유지. (sharp 실제 인코딩.)
 - 앱 이미지 렌더: 수동 확인(`npm run dev`).
@@ -126,7 +130,7 @@ export function imageUrlTransform(url: string): string {
 | `scripts/parse-vault.ts` | 이미지 인덱싱·sharp 최적화·run() async |
 | `scripts/parse-vault.test.ts` | 이미지 인라인 통합 테스트 |
 | `src/pages/ReviewSession.tsx` | urlTransform + img 스타일 |
-| `package.json` | `sharp` devDep |
+| `package.json` | 변경 없음 (`sharp` 이미 존재) |
 | `docs/obsidian-guide.md` | 이미지 작성법(`![[img]]`) + CLI 필요 명시 |
 | `ROADMAP.md` | 5-4 갱신 |
 | `src/lib/obsidian.ts`(parseVault) | 변경 없음 |
