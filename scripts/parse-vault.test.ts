@@ -19,6 +19,10 @@ describe('parseArgs', () => {
     expect(() => parseArgs([])).toThrow();
     expect(() => parseArgs(['-o', 'x.json'])).toThrow();
   });
+  it('값이 필요한 플래그 뒤에 값이 없으면 usage 에러', () => {
+    expect(() => parseArgs(['/v', '-o'])).toThrow(/Usage/);
+    expect(() => parseArgs(['/v', '--version'])).toThrow(/Usage/);
+  });
 });
 
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';

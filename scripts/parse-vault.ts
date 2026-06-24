@@ -28,6 +28,8 @@ export interface CliArgs {
   version: string;
 }
 
+const USAGE = 'Usage: parse <vault-dir> [-o public/cards.json] [--version <str>]';
+
 export function parseArgs(argv: string[]): CliArgs {
   let vaultDir: string | undefined;
   let outPath = 'public/cards.json';
@@ -35,14 +37,19 @@ export function parseArgs(argv: string[]): CliArgs {
 
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '-o' || a === '--out') outPath = argv[++i];
-    else if (a === '--version') version = argv[++i];
-    else if (!a.startsWith('-')) vaultDir ??= a;
+    // 값을 요구하는 플래그: 뒤에 값이 없으면 명확한 usage 에러
+    if (a === '-o' || a === '--out') {
+      if (i + 1 >= argv.length) throw new Error(USAGE);
+      outPath = argv[++i];
+    } else if (a === '--version') {
+      if (i + 1 >= argv.length) throw new Error(USAGE);
+      version = argv[++i];
+    } else if (!a.startsWith('-')) {
+      vaultDir ??= a;
+    }
   }
 
-  if (!vaultDir) {
-    throw new Error('Usage: parse <vault-dir> [-o public/cards.json] [--version <str>]');
-  }
+  if (!vaultDir) throw new Error(USAGE);
   return { vaultDir, outPath, version: version ?? new Date().toISOString() };
 }
 
