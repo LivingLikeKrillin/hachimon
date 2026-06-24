@@ -47,3 +47,46 @@ describe('collectMarkdownFiles', () => {
     }
   });
 });
+
+import { readFileSync } from 'node:fs';
+import { run } from './parse-vault.ts';
+
+describe('run', () => {
+  const VALID = [
+    '## Self-Test Anchors',
+    '#flashcard/spring/core',
+    '### Foundation',
+    '트랜잭션 전파란?::경계 동작 규칙.',
+  ].join('\n');
+
+  it('vault를 파싱해 cards.json을 쓰고 카운트를 반환한다', () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'vault-'));
+    try {
+      writeFileSync(path.join(root, 'Spring.md'), VALID);
+      const outPath = path.join(root, 'out', 'cards.json');
+      const res = run({ vaultDir: root, outPath, version: 'V1' });
+      expect(res).toEqual({ decks: 1, cards: 1 });
+      const data = JSON.parse(readFileSync(outPath, 'utf-8'));
+      expect(data.version).toBe('V1');
+      expect(data.cards).toHaveLength(1);
+      expect(data.cards[0].deck).toBe('flashcard/spring/core');
+      expect(data.decks[0].cardCount).toBe(1);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('vault 디렉토리가 없으면 throw', () => {
+    expect(() => run({ vaultDir: '/no/such/dir', outPath: 'x.json', version: 'V' })).toThrow();
+  });
+
+  it('카드가 0장이면 throw', () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'vault-'));
+    try {
+      writeFileSync(path.join(root, 'empty.md'), '# 본문만 있고 카드 없음');
+      expect(() => run({ vaultDir: root, outPath: path.join(root, 'o.json'), version: 'V' })).toThrow();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
