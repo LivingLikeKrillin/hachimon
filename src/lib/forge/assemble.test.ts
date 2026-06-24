@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseVault } from '../obsidian.ts';
-import { toSlug, uniqueSlug, assembleNote, countParsedCards } from './assemble.ts';
+import { toSlug, uniqueSlug, assembleNote, countParsedCards, validateDraft } from './assemble.ts';
 import type { QuizResult } from './schema.ts';
 
 const CREATED = '2026-06-25T00:00:00.000Z';
@@ -80,5 +80,42 @@ describe('countParsedCards', () => {
       CREATED,
     );
     expect(countParsedCards(md)).toBe(0);
+  });
+});
+
+describe('validateDraft', () => {
+  const ok = (quiz: QuizResult) =>
+    validateDraft(assembleNote({ title: 'T', body: 'b', deck: 'd/e', quiz }, CREATED), quiz);
+
+  it('정상 카드는 통과한다', () => {
+    const v = ok({ foundation: [{ q: '전파란?', a: '규칙.' }], mechanism: [], diagnosis: [] });
+    expect(v.ok).toBe(true);
+    expect(v.cardCount).toBe(1);
+  });
+
+  it('멀티라인 일반 답변은 통과한다', () => {
+    const v = ok({ foundation: [{ q: 'Q?', a: '첫째 줄\n둘째 줄' }], mechanism: [], diagnosis: [] });
+    expect(v.ok).toBe(true);
+  });
+
+  it('질문에 :: 가 있으면 손상으로 거부한다', () => {
+    const v = ok({ foundation: [{ q: 'List::class란?', a: '코틀린 클래스 참조.' }], mechanism: [], diagnosis: [] });
+    expect(v.ok).toBe(false);
+  });
+
+  it('답변에 :: 가 있으면(유령 카드) 거부한다', () => {
+    const v = ok({ foundation: [{ q: 'Q?', a: 'a::b 형태' }], mechanism: [], diagnosis: [] });
+    expect(v.ok).toBe(false);
+  });
+
+  it('답변 내 ### 헤딩 라인은 카드 손상으로 거부한다', () => {
+    const v = ok({ foundation: [{ q: 'Q?', a: '설명\n### Diagnosis 같은 줄\n계속' }], mechanism: [], diagnosis: [] });
+    expect(v.ok).toBe(false);
+  });
+
+  it('카드 0개면 거부한다', () => {
+    const v = ok({ foundation: [], mechanism: [], diagnosis: [] });
+    expect(v.ok).toBe(false);
+    expect(v.cardCount).toBe(0);
   });
 });
