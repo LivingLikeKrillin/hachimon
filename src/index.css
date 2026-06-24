@@ -199,15 +199,54 @@ input[type="range"]::-webkit-slider-thumb {
   font-size: 13px;
   font-family: var(--font-mono);
 }
-.prose-hachimon pre {
+/* 코드블록 카드: 언어 라벨 헤더 + 줄 번호 거터 */
+.prose-hachimon .code-card {
   background: #0D0F14;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 13px;
-  padding: 16px;
-  overflow-x: auto;
   margin: 12px 0;
+  overflow: hidden;
 }
-.prose-hachimon pre code {
+.prose-hachimon .code-lang {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6B7280;
+  padding: 8px 14px 0;
+}
+.prose-hachimon .code-scroll {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 12px 14px 14px;
+}
+/* 거터와 코드는 동일한 line-height/font-size 로 정렬 */
+.prose-hachimon .code-gutter {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  color: #3C4350;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.75;
+  text-align: right;
+  user-select: none;
+}
+.prose-hachimon .code-pre {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+}
+.prose-hachimon .code-pre code {
   background: none;
   padding: 0;
   color: #C7CCD4;
