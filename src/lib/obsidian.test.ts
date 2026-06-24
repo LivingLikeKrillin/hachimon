@@ -214,4 +214,14 @@ describe('parseVault — multi-line answers', () => {
     const { cards } = parseVault([{ name: 'n.md', content }], VERSION);
     expect(cards[0].sourceHash).toBe('0ff541');
   });
+
+  it('코드 밖 평문 ::는 새 카드로 오인된다 (문서화된 제약)', () => {
+    // 답변 이어쓰기 줄에 펜스/인라인코드 밖 날것 ::가 있으면 새 카드로 분리됨.
+    // → "::는 코드/인라인으로 감싸라"는 문서화된 제약을 고정하는 가드.
+    const content = wrap(['질문?::설명.', 'key::value 형태로 쓴다.'].join('\n'));
+    const { cards } = parseVault([{ name: 'n.md', content }], VERSION);
+    expect(cards).toHaveLength(2);
+    expect(cards[0].answer).toBe('설명.');
+    expect(cards[1].question).toBe('key');
+  });
 });
