@@ -70,4 +70,22 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // 무거운 의존성을 별도 청크로 분리 → 초기 로딩 개선 + 캐시 효율
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (id.includes('highlight.js')) return 'highlight'
+          if (id.includes('ts-fsrs')) return 'fsrs'
+          if (
+            id.includes('react-markdown') || id.includes('rehype') || id.includes('remark') ||
+            id.includes('micromark') || id.includes('mdast') || id.includes('hast') ||
+            id.includes('unist') || id.includes('vfile')
+          ) return 'markdown'
+          return 'vendor'
+        },
+      },
+    },
+  },
 })
