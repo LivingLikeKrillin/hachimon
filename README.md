@@ -202,6 +202,45 @@ $ npm run parse -- /path/to/vault -o public/cards.json
 
 ---
 
+## 인박스 파이프라인 (Forge)
+
+Obsidian 인박스에 막 던져둔 raw 캡처(`.md`)를 Claude로 **정리된 노트 + 덱 분류 + 3-tier 퀴즈 카드**가 담긴 draft로 변환하는 Node/TS CLI입니다. 결과 draft는 사람이 Obsidian에서 검토·승격한 뒤 빌드타임 파서로 `cards.json`에 합쳐집니다.
+
+```bash
+$ npm run inbox -- <inbox-dir> [--dry-run]
+# ✓ N개 처리 / M개 draft 생성 / K개 보류
+```
+
+`ANTHROPIC_API_KEY` 환경변수가 필요합니다(Claude 호출).
+
+### 옵션
+
+| 옵션 | 기본값 | 설명 |
+|------|--------|------|
+| `<inbox-dir>` | (필수) | raw `.md` 캡처가 담긴 인박스 디렉토리 |
+| `-o` / `--out` | `_forge-drafts` | draft 출력 디렉토리 |
+| `--deck-source` | `public/cards.json` | 기존 덱 목록 소스(`.json`이면 cards.json 파싱, 아니면 vault 디렉토리로 간주) |
+| `--model` | `claude-opus-4-8` | 사용할 Claude 모델 |
+| `--dry-run` | off | 파일을 쓰지 않고 조립된 draft를 콘솔에 출력(인박스 원본 보존) |
+| `--keep` | off | draft를 쓰되 인박스 원본을 삭제하지 않음 |
+
+### 흐름
+
+```
+인박스 raw .md
+  → Claude 2회 호출 (① 노트 정리·덱 분류 / ② 3-tier 퀴즈 생성)
+  → 노트 조립 → parseVault 라운드트립 검증(카드 개수·질문·답변 일치) 통과 시에만
+  → _forge-drafts/<deck>/<slug>.md
+  → 사용자가 Obsidian에서 검토·승격(이동)
+  → npm run parse 로 cards.json 빌드
+```
+
+덱은 노트 안의 `#flashcard/<deck>` **태그로 결정**되므로, draft를 vault 어디로 옮겨도 분류가 보존됩니다(이동 위치 무관). 조립 결과는 앱·CLI·플러그인과 **동일한 단일 진실원천 파서**(`parseVault`)로 라운드트립해 의도한 카드가 그대로 추출되는지 검증한 뒤에만 draft로 기록하며, 검증에 실패한 노트는 보류하고 인박스 원본을 보존합니다. 구현: `scripts/inbox.ts`(부수효과·Claude 호출), 순수 로직은 `src/lib/forge/*`(schema·prompts·decks·assemble).
+
+> ⚠️ 빌드타임 파서(`npm run parse`)는 `_forge-drafts`와 `inbox` 디렉토리를 vault 스캔에서 제외합니다(미검수 draft·raw 캡처가 `cards.json`에 섞이지 않도록). `-o`로 **다른 이름의 출력 폴더**를 쓰거나 인박스를 다른 이름으로 두고 그 폴더가 **vault 내부에 있다면**, `scripts/parse-vault.ts`의 `EXCLUDE_DIRS`에 그 이름을 직접 추가하세요.
+
+---
+
 ## Project Structure
 
 ```

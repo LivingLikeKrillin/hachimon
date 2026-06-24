@@ -1,6 +1,6 @@
 # Hachimon Roadmap
 
-> 현재 상태: Phase 0~5 핵심 구현 완료. 데이터 파이프라인 + 복습/단련/새 카드 세션 + 마크다운·코드 렌더링 + PWA + FSRS + CLI/플러그인/이미지·멀티라인 파서까지 연결됨.
+> 현재 상태: Phase 0~5 핵심 구현 완료. 데이터 파이프라인 + 복습/단련/새 카드 세션 + 마크다운·코드 렌더링 + PWA + FSRS + CLI/플러그인/이미지·멀티라인 파서 + 인박스→노트→분류→퀴즈 파이프라인까지 연결됨.
 > 잔여: Web Push(백엔드 필요·보류), 플러그인/인앱 이미지 인라인(후속).
 
 ---
@@ -195,6 +195,15 @@ SM-2에서 FSRS로의 전환을 검토하고, Obsidian과의 통합을 강화한
 - [x] 이미지 최적화 — sharp 리사이즈(가로 800px)+WebP(q80), SVG는 벡터 passthrough. 개당 >200KB 경고.
 - [x] 플러그인 인라인 — Obsidian 플러그인 export 시 vault 이미지를 Canvas로 최적화(가로 800px+WebP q80, SVG 벡터 passthrough)해 base64 인라인. `sharp`(네이티브)를 못 쓰는 환경이라 `src/lib/imageOptimize.ts`로 대체, 정책은 CLI와 동일. 공유 `replaceImageRefs` 재사용.
 - [~] 인앱 런타임 인라인 — **비목표**. 앱은 정적 `cards.json`만 fetch하고 vault 접근이 없어(서버리스 원칙) 인라인 주체가 아님. CLI/플러그인이 빌드 타임에 인라인.
+
+### 5-6. 인박스 파이프라인 (완료 — Node/TS CLI, Claude 하이브리드 2회 호출)
+
+- [x] `npm run inbox -- <inbox-dir>` — 인박스 raw `.md`를 Claude로 정리된 노트 + 덱 분류 + 3-tier 퀴즈 draft로 변환 (`scripts/inbox.ts`, `tsx` 실행)
+- [x] 하이브리드 2회 호출 — ① 노트 정리·덱 분류(구조화 출력), ② 3-tier 퀴즈 생성(adaptive thinking). `@anthropic-ai/sdk` `messages.parse()` + zod 스키마로 출력 강제 (`src/lib/forge/schema.ts`)
+- [x] parseVault 라운드트립 검증 게이트 — 조립 결과를 단일 진실원천 파서로 라운드트립해 카드 개수·질문·답변이 의도와 일치하는지 확인. 실패 노트는 보류·인박스 원본 보존 (`src/lib/forge/assemble.ts` validateDraft)
+- [x] 사람 검수 draft→승격 유지 — `_forge-drafts/<deck>/<slug>.md`로 쓰고, 사용자가 Obsidian에서 검토 후 vault로 이동(덱은 태그로 결정되므로 위치 무관) → `npm run parse`로 cards.json 빌드
+- [x] 순수 로직(`src/lib/forge/*`: schema·prompts·decks·assemble)과 부수효과(`scripts/inbox.ts`: fs·Claude·오케스트레이션) 분리. forge 로직은 네트워크 없이 단위 테스트. `parse-vault`의 `EXCLUDE_DIRS`에 `_forge-drafts`·`inbox` 추가로 미검수 draft가 빌드에 섞이지 않음
+- [~] 인앱 인박스 처리 — **비목표**. Claude 호출(키·비용·네트워크)은 빌드타임 CLI에 격리. 앱은 정적 `cards.json`만 fetch(서버리스 원칙)
 
 ---
 

@@ -5,7 +5,7 @@ import sharp from 'sharp';
 import { parseVault, type VaultFile } from '../src/lib/obsidian.ts';
 import { replaceImageRefs } from '../src/lib/images.ts';
 
-const EXCLUDE_DIRS = new Set(['node_modules']);
+const EXCLUDE_DIRS = new Set(['node_modules', '_forge-drafts', 'inbox']);
 
 const IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg']);
 
