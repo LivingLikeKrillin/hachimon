@@ -94,7 +94,9 @@ interface CaptureMeta {
   note: string;          // 사용자 한 줄 메모(빈 문자열 허용)
   source: string;        // 출처 URL/앱 이름(선택, 빈 문자열 허용)
   tags: string[];        // 사용자 태그(선택)
-  imageExt: string;      // 'webp' | 'png' | 'jpg' ... (최적화 후 통상 'webp')
+  imageExt: string;      // 최적화 출력 확장자. 통상 'webp'(래스터), SVG는 'svg' passthrough.
+                         // 주의: 폼의 잠정 확장자가 아니라 imageOptimize 출력 ext로 세팅되어야 임베드가 일치
+
 }
 
 // 릴레이 D1 row = CaptureMeta + 상태
@@ -125,7 +127,7 @@ interface CaptureMeta {
 
 - **업로드 원자성**: row(`pending`)→R2 put→row `ready` 순서. `GET ?consumed=0`은 `ready`만 반환 → 반쪽 업로드를 데스크톱이 가져가지 않는다. `pending`인 채 일정 시간(예: 1h) 경과한 고아 row는 cron이 정리.
 - **수명/정리**: 스케줄드 Worker(cron)가 `consumed=1 AND consumedAt < now-7d`인 R2 객체+D1 row를 purge(안전 창 7일). 미소비분은 절대 자동 삭제하지 않는다.
-- **한도**: 단일 사용자·저volume 전제. 요청 크기 상한(예: 이미지 10MB) 초과 시 413. 인증 실패 401, 미존재 404.
+- **한도**: 단일 사용자·저volume 전제. 요청 크기 상한(예: 이미지 10MB) 초과 시 413. 인증 실패 401, **메타 검증 실패 400**, 이미지 누락 400, 미존재 404.
 
 ## 6. 데스크톱 동기 CLI (`scripts/sync-captures.ts`)
 
@@ -153,12 +155,12 @@ tags: []
 captureId: <uuid>
 status: raw          # 후속 변환 서비스가 처리할 표식
 ---
-![[짤-2026-06-25-a3f2.webp]]
+![[짤-2026-06-25-a3f2c1d40000.webp]]
 
 <있으면 사용자 메모 한 줄>
 ```
 
-- **파일명 규칙(결정적)**: `<shortid>` = 캡처 `id`(UUID)의 하이픈 제거 후 앞 8자(hex). 베이스명 `짤-YYYY-MM-DD-<shortid>`를 노트(`.md`)와 이미지가 **공유**(예: `짤-2026-06-25-a3f2c1d4.md` + `짤-2026-06-25-a3f2c1d4.webp`). 같은 날 8자 충돌 시 베이스명에 `-2` 등 카운터 접미사. 결정성·충돌 처리는 §8 단위 테스트 대상.
+- **파일명 규칙(결정적)**: `<shortid>` = 캡처 `id`(UUID)의 하이픈 제거 후 앞 **12자**(hex, 48비트). 베이스명 `짤-YYYY-MM-DD-<shortid>`를 노트(`.md`)와 이미지가 **공유**(예: `짤-2026-06-25-a3f2c1d40000.md` + `짤-2026-06-25-a3f2c1d40000.webp`). 12 hex(48비트)면 현실 volume에서 같은 날 충돌은 무시 가능 수준이라 카운터 접미사를 두지 않는다(YAGNI). 결정성은 §8 단위 테스트 대상.
 - **멱등**: 노트 frontmatter `captureId`와 위 결정적 파일명으로 중복 판단. 이미 존재하면 기록 건너뛰고 consume만 보장 → 재실행·부분실패 복구 안전.
 - **부분 실패**: 디스크 기록 실패 또는 네트워크 실패 시 consume **안 함** → 다음 실행이 dedup로 안전하게 복구. consume 실패해도 다음 실행이 재시도(중복 안착은 dedup가 막음).
 - **운용(마찰 0)**: 기본은 **Windows 작업 스케줄러**(로그온/주기 실행)로 등록 → 캡처가 Obsidian에 *저절로 나타남*. `npm run sync` 수동 실행은 폴백. (스케줄러 등록 절차는 구현 계획에서 문서화.)
