@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { BarChart3 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import PageLayout from '@/components/layout/PageLayout';
 import type { Tier } from '@/types';
@@ -115,19 +116,29 @@ export default function Stats() {
         </div>
         <Card>
           <CardContent className="px-4 pt-5 pb-4">
-            <div className="flex items-end gap-[5px] h-[118px]">
-              {daily.map((v, i) => (
-                <div
-                  key={i}
-                  className="flex-1 rounded-t-[4px] rounded-b-[2px]"
-                  style={{
-                    height: `max(8%, ${(v / maxDaily) * 100}%)`,
-                    background: 'linear-gradient(180deg,#8AA3E0 0%,#5E78C4 100%)',
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)',
-                  }}
-                />
-              ))}
-            </div>
+            {summary.total === 0 ? (
+              <div className="h-[118px] flex flex-col items-center justify-center text-center gap-1.5">
+                <span className="w-[38px] h-[38px] rounded-[11px] bg-[#181B21] border border-white/[0.07] flex items-center justify-center mb-1.5">
+                  <BarChart3 size={19} className="text-[#5D636F]" strokeWidth={1.7} />
+                </span>
+                <p className="text-[14.5px] font-medium text-[#C7CCD4]">아직 복습 기록이 없어요</p>
+                <p className="text-[13px] text-[#5D636F] leading-snug">복습을 시작하면 일별 복습량이 쌓여요</p>
+              </div>
+            ) : (
+              <div className="flex items-end gap-[5px] h-[118px]">
+                {daily.map((v, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 rounded-t-[4px] rounded-b-[2px]"
+                    style={{
+                      height: `max(8%, ${(v / maxDaily) * 100}%)`,
+                      background: 'linear-gradient(180deg,#8AA3E0 0%,#5E78C4 100%)',
+                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)',
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
