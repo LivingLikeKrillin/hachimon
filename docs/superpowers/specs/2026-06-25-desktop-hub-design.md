@@ -101,7 +101,7 @@
 | `core/note.ts` | staging 노트 조립/파싱(frontmatter read/write), `baseName`(재사용), status 전이 | 없음(순수) | 단위(라운드트립) |
 | `core/transform-schema.ts` | Claude vision 출력 zod 스키마(`TransformResult`) | zod | 단위(파싱·거부) |
 | `core/promote.ts` | staging→vault 경로 결정, 승격 시 frontmatter 정리 | 없음(순수) | 단위 |
-| `main/relay.ts` | 릴레이 클라이언트: list/image/consume(fetch) | fetch | 얇음(모킹) |
+| `main/relay-client.ts` | 릴레이 클라이언트: list/image/consume(fetch). (capture repo `worker/relay.ts`와 이름 충돌 회피 위해 `-client` 접미) | fetch | 얇음(모킹) |
 | `main/staging-store.ts` | fs: staging 스캔/읽기/쓰기/이동 | fs | 얇음(통합/임시디렉토리) |
 | `main/transform.ts` | Claude vision 호출(이미지 base64+컨텍스트) → `TransformResult` | sdk | 얇음(모킹) |
 | `main/ipc.ts` | IPC 핸들러 오케스트레이션(pull→store→transform, promote) | 위 전부 | 수동/통합 |
@@ -129,7 +129,7 @@ interface TransformResult {
   title: string;       // 제안 제목
   insight: string;     // 핵심 1~3문장(추출)
   ocr: string;         // 원문(이미지 텍스트, 없으면 '')
-  tags: string[];      // 제안 태그(사용자 태그와 합집합)
+  tags: string[];      // AI 제안 태그(원본). 사용자 태그와의 합집합·중복제거는 core/note 조립이 수행(소유권 단일화)
 }
 
 // 앱 내부 표현(staging 파일에서 파생)
@@ -167,7 +167,8 @@ vault-외 staging 폴더 하나. 항목 1건 = 노트 1개 + 이미지 1개. 결
 ### 5.1 멱등 & 부분 실패
 
 - **릴레이 consume 시점**: staging에 이미지+노트를 안전히 쓴 **직후** consume(캡처 PWA "둘 다 성공 시 consume" 그대로). staging이 내구성 보관소, 릴레이는 전송 버퍼.
-- **pull 멱등**: staging에 같은 `captureId`(=베이스명) 파일이 이미 있으면 다운로드·쓰기 건너뛰고 consume만 보장. 재실행·부분실패 복구 안전.
+- **pull 멱등**: staging에 같은 베이스명 `.md`가 이미 있으면 다운로드·쓰기 건너뛰고 consume만 보장(캡처 PWA `sync-captures.ts`의 `shouldSkip` = `<base>.md` 존재 판정과 **동일 술어 재사용** → dedup 의미 일치). 재실행·부분실패 복구 안전.
+- 릴레이 `GET /captures?consumed=0`은 이미 서버에서 `status='ready'`만 반환(반쪽 업로드 제외) → 앱은 클라이언트측 status 체크 불필요.
 - **변환 멱등**: 변환은 `status: raw`인 항목만 대상. 실패 시 raw 유지 + `error` 표식 → 다음 자동/수동 트리거가 재시도. 노트 단위 격리(한 건 실패가 전체 중단 안 함).
 - **승격 멱등**: vault 대상에 같은 베이스명이 있으면 덮어쓰지 않고 경고(중복 안착 방지). 승격 성공 후에만 staging에서 제거.
 
@@ -182,6 +183,7 @@ vault-외 staging 폴더 하나. 항목 1건 = 노트 1개 + 이미지 1개. 결
     { type: 'text', text: buildTransformPrompt(meta) }, // 규격 지시 + 메모/타입/출처 주입
   ]
   ```
+  > 주의: 릴레이는 이미지를 `content-type: application/octet-stream`으로 서빙(실제 mime 아님). 앱은 staging에 저장된 파일의 **확장자(`imageExt`)에서 mime을 도출**(`mimeFor(ext)`)해 vision 블록을 만든다 — HTTP `content-type`을 신뢰하지 말 것.
 - **구조화 출력**: `client.messages.parse({ ... output_config: { format: zodOutputFormat(TransformSchema) } })` → `parsed_output`이 `TransformResult`. `inbox.ts`의 `messages.parse`+zod 패턴 계승.
 - **추론**: 추출·요약 추론이 필요하므로 `thinking: { type: 'adaptive' }`. `max_tokens` ~8000(비스트리밍, 출력 작음). `stop_reason === 'max_tokens'` 시 경고.
 - **모델**: `claude-opus-4-8`(정확 문자열, 날짜접미 금지). 설정에서 override 가능.
@@ -215,6 +217,7 @@ title: 복리는 시간의 함수다
 ```
 
 - `## 핵심`/`## 원문`은 type별 규격(v1 짤 한 규격). 빈 섹션은 생략(OCR 없으면 `## 원문` 생략).
+- **태그 합집합**: `core/note.ts` 조립이 `meta.tags ∪ transform.tags`를 순서보존·중복제거로 frontmatter에 기록(합집합 소유권은 조립부에만).
 - 비어도 안전: 추출 실패해도 메모+이미지(raw 포맷)로 보존.
 - **승격 시**: 이 `.md`+이미지를 vault 대상 폴더로 이동(임베드 `![[...]]` 유지). `status` 등 staging 전용 frontmatter는 `core/promote.ts`가 정리(`captureId`·`created`·`type`·`tags`·`title`은 보존).
 - raw 상태 노트는 캡처 PWA의 `assembleNote`와 동일 포맷(frontmatter + 임베드 + 메모, `status: raw`).
@@ -251,7 +254,7 @@ title: 복리는 시간의 함수다
 Hachimon 분리 원칙(순수 단위 + 부수효과 얇게):
 
 - **단위(vitest)**: `core/note.ts`(조립→파싱 라운드트립: frontmatter·임베드·captureId·status 검증; raw↔transformed 포맷), `core/transform-schema.ts`(zod 파싱 성공/필드누락 거부), `core/promote.ts`(경로 결정·frontmatter 정리·중복 판단), `baseName` 결정성.
-- **얇은 어댑터**: `relay.ts`(fetch 모킹: 인증 헤더·consume), `transform.ts`(SDK 모킹: 이미지 블록 구성·스키마 강제), `staging-store.ts`(임시 디렉토리 통합: 쓰기/스캔/이동 멱등).
+- **얇은 어댑터**: `relay-client.ts`(fetch 모킹: 인증 헤더·consume), `transform.ts`(SDK 모킹: 이미지 블록 구성·스키마 강제), `staging-store.ts`(임시 디렉토리 통합: 쓰기/스캔/이동 멱등).
 - **Electron IPC/renderer**: 얇게 — 수동/통합. main IPC 핸들러는 코어 조합이라 코어 테스트가 대부분 커버.
 - **수동 e2e(1회)**: 실폰 캡처 → 릴레이 → 앱 열기(자동 pull+변환) → 검토·수정 → 승격 → Obsidian에 정본 노트+이미지 확인.
 
