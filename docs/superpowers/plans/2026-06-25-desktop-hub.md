@@ -44,6 +44,7 @@ anchor/                              (새 repo 루트)
 │   │   └── settings.ts             릴레이/키/경로 영속(userData JSON)
 │   ├── preload/index.ts            contextBridge window.api
 │   └── renderer/
+│       ├── api.d.ts                window.api 타입 선언(Task 10)
 │       ├── index.html / main.tsx / App.tsx / index.css
 │       ├── lib/utils.ts            cn 헬퍼
 │       ├── hooks/useItems.ts       window.api ↔ React 상태
