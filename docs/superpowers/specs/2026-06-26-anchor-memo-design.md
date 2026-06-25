@@ -72,7 +72,9 @@ memo는 reflection의 텍스트-모드 변환·텍스트 노트 포맷을 재사
 
 ### 4.1 kind 판별자 재사용
 
-memo는 staging frontmatter `kind: memo`로 식별. `noteKind`(현 `capture`/`reflection` 판별)를 memo까지 확장. 공유(분기 없이 재사용): staging 폴더·`status` 생애주기·`stripStagingFrontmatter`·트리아지/에디터 셸·`auto()`·promote→removeItem. 분기(kind별): 메타 타입·노트 조립·변환·입구(폴더 인입)·에디터 필드·목록 행.
+memo는 staging frontmatter `kind: memo`로 식별. `noteKind`(현 `capture`/`reflection` 판별)를 memo까지 확장. 공유(분기 없이 재사용): staging 폴더·`status` 생애주기·`stripStagingFrontmatter`·`auto()`·promote→removeItem. 분기(kind별): 메타 타입·노트 조립·변환·입구(폴더 인입)·에디터 필드·목록 행.
+
+> **주의(이진 분기 → 3-way 전환).** 현재 `TriageList.tsx`·`App.tsx`(에디터 디스패치)·`ipc.ts runTransform`은 **`kind === 'capture' ? … : (reflection 처리)`**의 이진 분기다. 즉 `else`가 무조건 reflection을 가정해 `item.meta.medium`/`workTitle`을 읽는다. memo 멤버를 유니온에 더하면 이 `else`가 memo에도 걸려 런타임 오류(또는, 다행히 먼저 잡히는) TS 에러를 낸다. 따라서 세 지점의 `else`를 **명시적 `kind === 'reflection'`으로 좁히고 memo 분기를 추가**해야 한다(단순 멤버 추가가 아니라 이진→3-way 전환). §11/§12의 "회귀 0"은 이 전환을 전제로 성립.
 
 ### 4.2 모듈 경계 (신규/변경, anchor repo)
 
@@ -86,9 +88,9 @@ memo는 staging frontmatter `kind: memo`로 식별. `noteKind`(현 `capture`/`re
 | `main/staging-store.ts` | 추가 | `writeMemoRaw`/`writeMemoTransformed`, `scan` memo 분기 |
 | `main/inbox.ts` | 신규 | `ingestInbox(inboxDir, stagingDir)` — `.txt` 스캔·MemoMeta 발급·`_processed` 이동(fs) |
 | `main/ipc.ts` | 추가 | `auto()`에 ingest 추가; `transform:run`·`item:promote`·`item:save`에 memo 분기 |
-| `main/settings.ts` | 추가 | `inboxDir`(메모장 폴더), `memoSubdir`(기본 `메모`) |
-| `renderer/api.d.ts`(→`shared/api.ts`) | 추가 | `AppSettings`에 `inboxDir`/`memoSubdir` |
-| `renderer/components/*` | 추가/변경 | `MemoBadge`(신규), `MemoEditor`(신규), `TriageList`·`SettingsSheet` memo 분기 |
+| `main/settings.ts` | 추가 | `Settings`+`DEFAULT_SETTINGS`에 `inboxDir`(메모장 폴더), `memoSubdir`(기본 `메모`) |
+| `shared/api.ts` | 추가 | `AppSettings` 미러에 `inboxDir`/`memoSubdir`(렌더러측 권위 정의 — `AppSettings`는 최근 리팩터로 `api.d.ts`가 아니라 여기 산다) |
+| `renderer/components/*` | 추가/변경 | `MemoBadge`(신규, `MediumBadge` 구조 미러), `MemoEditor`(신규), `TriageList`·`App`(에디터 디스패치)·`SettingsSheet` memo 분기 — **아래 §4.1 주의** |
 
 순수/부수효과 분리 유지: `core/*`(note·memo-schema·promote)는 fs·네트워크·DOM 없이 단위 테스트. `inbox.ts`는 얇은 fs 어댑터.
 
