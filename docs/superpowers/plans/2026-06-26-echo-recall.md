@@ -22,7 +22,7 @@
 
 ```
 echo/
-├── package.json · vite.config.ts · tsconfig*.json · tailwind 설정 · index.html · vitest.config.ts · vitest.workers.config.ts
+├── package.json · vite.config.ts(+test 블록) · tsconfig*.json · tailwind 설정 · index.html · eslint.config.js · vitest.workers.config.ts
 ├── public/ (manifest·icons)
 ├── src/
 │   ├── index.css · main.tsx · App.tsx
@@ -65,7 +65,9 @@ Hachimon `package.json`을 베이스로 echo용으로 조정: `name: "echo"`, de
   "publish-notes": "tsx scripts/publish-notes.ts"
 }
 ```
-`vite.config.ts`·`tsconfig*`·`tailwind`·`index.html`·`src/index.css`(디자인 토큰)·`src/main.tsx`는 Hachimon에서 복사하되: index.html title/manifest "echo", vite PWA manifest name "echo", 런타임 캐시 대상 `cards.json`→불필요(echo는 토큰 fetch라 SW 런타임 캐시 대신 IndexedDB 캐시 — vite PWA는 앱셸 precache만). `vitest.config.ts`: `environment: 'node'`(순수 lib) + `setupFiles`에 fake-indexeddb(db 테스트용; Hachimon 패턴), `exclude` worker 테스트. `src/App.tsx`는 임시 `<h1>echo</h1>`.
+`vite.config.ts`·`tsconfig*`·`tailwind`·`index.html`·`src/index.css`(디자인 토큰)·`src/main.tsx`·`eslint.config.js`는 Hachimon에서 복사하되: index.html title/manifest "echo", vite PWA manifest name "echo", 런타임 캐시 대상 `cards.json`→불필요(echo는 토큰 fetch라 SW 런타임 캐시 대신 IndexedDB 캐시 — vite PWA는 앱셸 precache만).
+
+**테스트 설정(실측 반영 — Hachimon은 별도 vitest.config 없이 vite.config을 상속):** `vite.config.ts`에 `test: { environment: 'node', exclude: ['worker/**', 'node_modules/**'] }` 블록을 추가한다 → vitest가 vite의 `resolve.alias`(`@`→`src`)를 그대로 상속해 `@/shared/types` import가 해석된다(**별도 vitest.config.ts를 쓸 경우 alias를 반드시 재선언**해야 하므로 vite.config 상속이 더 안전). db 테스트는 파일 최상단 `import 'fake-indexeddb/auto';`로 opt-in(Hachimon 실제 패턴 — `setupFiles` 아님). 워커 테스트만 별도 `vitest.workers.config.ts`(Chunk 2). `src/App.tsx`는 임시 `<h1>echo</h1>`.
 
 Run: `npm install` → 성공.
 
@@ -308,8 +310,8 @@ type: insight
 source: https://x/p/1
 tags: [투자, 복리]
 captureId: a3f2c1d4-0000-0000-0000-000000000000
-title: 복리는 시간의 함수다
 status: transformed
+title: 복리는 시간의 함수다
 ---
 ![[짤-2026-06-25-a3f2c1d40000.webp]]
 
@@ -419,7 +421,7 @@ capture `queue-db`·Hachimon `db` 패턴. 스토어 `notes`(key id)·`recall`(ke
 
 **Files:** Create `src/lib/db.ts`, `src/lib/db.test.ts`
 
-- [ ] **Step 1: 실패 테스트(fake-indexeddb)** — `applyMergePlan`(plan을 db에 반영: upsert notes·delete notes+recall·put recall inits)·`allNotes`·`allRecall`·`putRecall`(신호 적용 저장)·`getSetting`/`setSetting` 라운드트립. (setupFiles fake-indexeddb 전제.)
+- [ ] **Step 1: 실패 테스트(fake-indexeddb)** — 테스트 파일 최상단 `import 'fake-indexeddb/auto';`(Hachimon 패턴). `applyMergePlan`(plan을 db에 반영: upsert notes·delete notes+recall·put recall inits)·`allNotes`·`allRecall`·`putRecall`(신호 적용 저장)·`getSetting`/`setSetting` 라운드트립. (setupFiles fake-indexeddb 전제.)
 - [ ] **Step 2~4: 실패 → 구현 → 통과**
 
 idb `openDB<EchoDB>('echo', 1, { upgrade })` — 스토어 3개(keyPath: notes.id, recall.id, settings.key). `applyMergePlan(plan)`: 트랜잭션으로 upserts put·deletes(notes+recall 양쪽)·recallInits put. `allNotes`/`allRecall` getAll. `putRecall(state)` put. `getSetting/setSetting`. (직접 IDBTransaction 금지 — idb 래퍼.)
@@ -484,7 +486,7 @@ capture `sync-captures` 패턴(env config·Bearer·`run()` counts·exit). vault 
 
 **Files:** Create `scripts/publish-notes.ts`, `scripts/publish-notes.test.ts`
 
-- [ ] **Step 1: 실패 테스트(vault 픽스처 + fetch 모킹)** — `parseConfig(env)`: `RELAY_URL`·`RELAY_TOKEN`·`VAULT_DIR`(필수, 누락 throw). `buildFeed(vaultDir, version)`: 디렉토리 재귀 스캔 `*.md` → `parseFeedNote` non-null만 → `NotesFeed`(임시 디렉토리 픽스처: memo·capture 노트 + captureId 없는 노트 → 후자 제외). `run(cfg, version, fetchImpl)`: `buildFeed` → PUT `{baseUrl}/notes` Bearer body=JSON → `{ published: n }`.
+- [ ] **Step 1: 실패 테스트(vault 픽스처 + fetch 모킹)** — `parseConfig(env)`: `RELAY_URL`·`RELAY_TOKEN`·`VAULT_DIR`(필수, 누락 throw). `buildFeed(vaultDir, version)`: 디렉토리 재귀 스캔 `*.md` → `parseFeedNote` non-null만 → `NotesFeed`(임시 디렉토리 픽스처: memo·capture 노트 + captureId 없는 노트 → 후자 제외). `run(cfg, version, fetchImpl)`: `buildFeed` → PUT `{baseUrl}/notes` Bearer body=JSON → `{ published: n }`. **테스트는 고정 `version`(예 `'v1'`)을 주입**(non-deterministic 기본값으로 인한 flaky 방지)하고 PUT body가 captureId-less 노트를 제외했는지 검증.
 - [ ] **Step 2~4: 실패 → 구현 → 통과** — `buildFeed`는 fs 스캔(재귀 `readdirSync`)·`parseFeedNote` 순수 재사용. `run`은 PUT. `main()`: `parseConfig(process.env)`→`run`→exit 0/1. 엔트리 가드 `if (process.argv[1] === fileURLToPath(import.meta.url)) main()`. version=ISO(인자 또는 `new Date().toISOString()`).
 - [ ] **Step 5: Commit** — `git commit -am "feat: publish CLI(vault→notes.json→Worker PUT)"`
 
@@ -499,8 +501,8 @@ Run: `npm run test && npm run test:workers && npm run lint && npm run build` →
 
 **Files:** Create `src/lib/markdown.tsx`, `src/hooks/useRecall.ts`, `src/pages/Home.tsx`; Modify `src/App.tsx`
 
-- [ ] **Step 1: markdown.tsx** — Hachimon `markdown` 재사용(react-markdown + rehype-highlight, 코드블록 렌더). 
-- [ ] **Step 2: useRecall 훅** — 마운트 시 `allNotes`+`allRecall` 로드; `refresh()`=`fetchNotes`→`planMerge`→`applyMergePlan`→재로드(실패는 캐시 유지·비침습); `due` = `selectDue(recall, now, sessionSize)` → 해당 notes; `signal(id, sig)`=`applySignal`+`putRecall`+다음 due.
+- [ ] **Step 1: markdown.tsx** — react-markdown + rehype-highlight 렌더 컴포넌트. (Hachimon은 `ReviewSession.tsx`에 인라인이라 **재사용 가능한 컴포넌트로 추출**한다 — `markdown.ts`는 `imageUrlTransform` 헬퍼뿐.) 코드블록·urlTransform 포함.
+- [ ] **Step 2: useRecall 훅** — 마운트 시 `allNotes`+`allRecall` 로드; `refresh()`=`fetchNotes`→`planMerge`→`applyMergePlan`→재로드(실패는 캐시 유지·비침습); `due` = `selectDue(recall, now, sessionSize)` → 해당 notes; `signal(id, sig)`=`applySignal`+`putRecall`+다음 due. **`now`=훅 경계에서 `new Date().toISOString()`(Hachimon `data.ts` 패턴), `sessionSize`=`getSetting('sessionSize')`(기본 ~10, Settings에서 영속).**
 - [ ] **Step 3: App + Home** — App: Home/RecallSession 화면 전환(Hachimon App 패턴, 단순). Home: due 카운트 + "재소환 시작"(원탭) + 설정 진입. (선택) 연속일·총수는 후속.
 - [ ] **Step 4: 수동 확인** — `npm run dev`: 더미 설정으로 Home 렌더.
 - [ ] **Step 5: Commit** — `git commit -am "feat: 마크다운·useRecall·Home"`
@@ -519,7 +521,7 @@ Run: `npm run test && npm run test:workers && npm run lint && npm run build` →
 
 **Files:** Create `src/pages/Settings.tsx`, `src/components/SettingsSheet.tsx`
 
-- [ ] **Step 1: SettingsSheet** — 피드 URL·토큰(capture SettingsSheet 패턴), 세션 크기 슬라이더, 수동 새로고침(`refresh`), 데이터 리셋. `setSetting`으로 영속.
+- [ ] **Step 1: SettingsSheet** — 피드 URL·토큰(capture SettingsSheet **폼 UI** 미러 — 단 영속은 capture의 localStorage가 아니라 **IndexedDB `settings` 스토어** `setSetting`/`getSetting`), 세션 크기 슬라이더(`sessionSize`), 수동 새로고침(`refresh`), 데이터 리셋.
 - [ ] **Step 2: 수동 확인** — 설정 저장→재시작 유지, 새로고침으로 fetch+merge.
 - [ ] **Step 3: Commit** — `git commit -am "feat: 설정 시트(피드 URL·토큰·세션 크기)"`
 
@@ -552,3 +554,4 @@ Run: `npm run test && npm run test:workers && npm run lint && npm run build` →
 - 스케줄 Leitner stage. serendipity·FSRS-lite·write-back·데스크톱 면·opt-out·풍부한 통계는 후속.
 - notes.json은 R2 단일 오브젝트(capture의 D1+R2보다 단순 — echo는 읽기 위주).
 - `id=captureId`라 재배포 간 recall 보존. captureId 없는 손수 노트는 v1 비대상.
+- **스펙 §11 Playwright 모바일 스모크는 v1 의도적 보류** — renderer는 수동 테스트(spec §9 UI), 자동 게이트는 test+test:workers+lint+build. capture는 Playwright 스모크가 있으나 echo v1은 헤드리스 GUI 부담을 피해 수동 e2e 체크리스트(Task 13)로 대체. Playwright 추가는 후속.
