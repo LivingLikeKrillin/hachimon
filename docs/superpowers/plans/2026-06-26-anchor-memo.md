@@ -152,7 +152,7 @@ if (item.kind === 'memo') return { ok: false, reason: 'memo 저장 미지원(후
 - [ ] **Step 4: 게이트 — 회귀 0**
 
 Run: `npm run test && npm run typecheck && npm run lint`
-Expected: 58 PASS, typecheck/lint 0 에러. (런타임 capture·reflection 불변.) 실패하면 거의 항상 유니온 미narrow — `kind` 가드 추가.
+Expected: 58 PASS, typecheck/lint 0 에러. (런타임 capture·reflection 불변.) 실패하면 거의 항상 유니온 미narrow — `kind` 가드 추가. **주의: Step 2와 Step 3을 함께 적용한 뒤 게이트를 돌려라**(둘 사이에서 돌리면 `App.tsx <ReflectionEditor>`·`TriageList item.meta.medium`가 TS 에러 — Step 3에서 사라짐).
 
 - [ ] **Step 5: Commit** — `git commit -am "refactor(types): StagingItem 3-멤버 유니온(memo) + 이진→3-way 분기 전환(회귀 0)"`
 
@@ -602,7 +602,7 @@ save: (base: string, fields: SaveFields | ReflectionSaveFields | MemoSaveFields)
 try { const s = readSettings(); if (s.inboxDir && s.stagingDir) ingestInbox(s.inboxDir, s.stagingDir); } catch { /* 인입 실패 비침습 */ }
 ```
 (import `ingestInbox` from `./inbox`. `do/while` 루프 안, pull 다음·transform 앞.)
-- [ ] **Step 2: runTransform memo 분기** — Task 1의 `else { continue; }`를 교체:
+- [ ] **Step 2: runTransform memo 분기** — Task 1 Step 2가 `runTransform`을 이미 `if capture {} else if reflection {} else { continue }` **3-way로 뒤집어 둔** 상태다(실제 master 코드는 `reflection / else(capture)`라 Task 1이 capture를 명시화함). 그 `else { continue; }`(=memo 자리)를 교체:
 ```ts
 } else {
   const tr = await transformMemo(client, item.meta, s.model);
@@ -657,10 +657,12 @@ export default function MemoBadge() {
   return <span className={cn('inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium', 'bg-white/8 text-[var(--t3)]')}>메모</span>;
 }
 ```
-- [ ] **Step 2: MemoEditor** — `ReflectionEditor.tsx`를 미러하되 필드는 제목·본문·태그(작품/진행/감상 제거). prop `item: MemoStagingItem`. `toForm`: `{ title: item.transform?.title ?? '', body: item.transform?.body ?? item.meta.note ?? '', tags: (item.transform?.tags ?? item.meta.tags).join(', ') }`. 좌 패널: source·원문 미리보기(`item.meta.note`)·base·error. `fields()`: `{ title, body, tags: split }` (타입 `MemoSaveFields`). Save 버튼 `disabled={busy !== null || form.title.trim() === ''}`. 변환다시/승격/버리기는 `window.api.transform/promote/discard` 공유(ReflectionEditor와 동일).
+- [ ] **Step 2: MemoEditor** — `ReflectionEditor.tsx`를 통째로 복사한 뒤 델타 적용: prop `ReflectionStagingItem`→`MemoStagingItem`, import `ReflectionSaveFields`→`MemoSaveFields`·`MediumBadge` 제거; `FormState`/`toForm`/`fields()`에서 `reflection·takeaway·progress·source` 제거, `body` 추가; 좌 패널의 작품/매체/진행 블록 제거. 즉 필드는 제목·본문·태그. `toForm`: `{ title: item.transform?.title ?? '', body: item.transform?.body ?? item.meta.note ?? '', tags: (item.transform?.tags ?? item.meta.tags).join(', ') }`. 좌 패널: source·원문 미리보기(`item.meta.note`)·base·error. `fields()`: `{ title, body, tags: split }` (타입 `MemoSaveFields`). Save 버튼 `disabled={busy !== null || form.title.trim() === ''}`. 변환다시/승격/버리기는 `window.api.transform/promote/discard` 공유(ReflectionEditor와 동일).
 - [ ] **Step 3: App memo 분기 교체** — Task 1의 "메모 에디터 준비 중" 자리를 `<MemoEditor key={selected.base} item={selected} onChanged={reload} onRemoved={() => { setSelectedBase(null); void reload(); }} />`로.
 - [ ] **Step 4: TriageList memo 뱃지 교체** — Task 1의 memo 인라인 span을 `<MemoBadge />`로(import 추가).
-- [ ] **Step 5: SettingsSheet** — `inboxDir`(폴더 선택 `pickDir`)·`memoSubdir`(텍스트) 입력 추가. 기존 `reflectionSubdir`/경로 입력 패턴 미러.
+- [ ] **Step 5: SettingsSheet** — `inboxDir`(폴더 선택)·`memoSubdir`(텍스트) 입력 추가.
+  - **주의(실측):** `reflectionSubdir`은 `AppSettings`에 있으나 SettingsSheet에 **렌더되는 입력 행이 없다**(미러할 기존 subdir 행 없음). 실제로 미러할 패턴은 둘: `inboxDir`은 **`dirRow` 폴더 피커 패턴**(현 stagingDir/vaultNotesDir/vaultAttachDir), `memoSubdir`은 **model/relayUrl 텍스트 입력 패턴**.
+  - `dirRow`와 `pick()` 헬퍼는 key 유니온이 하드코딩(`'stagingDir' | 'vaultNotesDir' | 'vaultAttachDir'`)이므로 **`'inboxDir'`을 두 유니온에 추가**해야 폴더 피커가 컴파일된다. `memoSubdir`은 텍스트라 별도 핸들러로 `setSettings({ memoSubdir })`.
 - [ ] **Step 6: 게이트** — Run: `npm run test && npm run typecheck && npm run lint && npm run build` → 전부 green.
 - [ ] **Step 7: Commit** — `git commit -am "feat(renderer): MemoBadge·MemoEditor + 트리아지/App memo 분기 + 설정(inboxDir)"`
 
