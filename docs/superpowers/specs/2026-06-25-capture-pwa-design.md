@@ -119,7 +119,7 @@ interface CaptureMeta {
   | 메서드·경로 | 동작 | 비고 |
   |---|---|---|
   | `POST /captures` | 멀티파트(이미지 파트 + 메타 JSON 파트). D1 row(`pending`) 생성 → R2 put → row `ready` 갱신. `{id}` 반환 | 이미 존재하는 `id`면 멱등 무시(중복 전송 안전) |
-  | `GET /captures?consumed=0` | `ready` & 미소비 메타 목록(JSON) | 데스크톱이 폴링 |
+  | `GET /captures?consumed=0` | `ready` & 미소비 메타 목록(JSON). 각 항목은 **`CaptureMeta` 전체 필드(`imageExt` 포함)** + `imageKey`를 담는다 → 데스크톱이 확장자·파일명을 도출 | 데스크톱이 폴링 |
   | `GET /captures/:id/image` | R2에서 이미지 스트림 | 인증 필요 |
   | `POST /captures/:id/consume` | `consumed=1, consumedAt=now` (멱등) | 데스크톱이 안착 성공 후 호출 |
 
@@ -158,7 +158,8 @@ status: raw          # 후속 변환 서비스가 처리할 표식
 <있으면 사용자 메모 한 줄>
 ```
 
-- **멱등**: 노트 frontmatter `captureId`와 결정적 파일명으로 중복 판단. 이미 존재하면 기록 건너뛰고 consume만 보장 → 재실행·부분실패 복구 안전.
+- **파일명 규칙(결정적)**: `<shortid>` = 캡처 `id`(UUID)의 하이픈 제거 후 앞 8자(hex). 베이스명 `짤-YYYY-MM-DD-<shortid>`를 노트(`.md`)와 이미지가 **공유**(예: `짤-2026-06-25-a3f2c1d4.md` + `짤-2026-06-25-a3f2c1d4.webp`). 같은 날 8자 충돌 시 베이스명에 `-2` 등 카운터 접미사. 결정성·충돌 처리는 §8 단위 테스트 대상.
+- **멱등**: 노트 frontmatter `captureId`와 위 결정적 파일명으로 중복 판단. 이미 존재하면 기록 건너뛰고 consume만 보장 → 재실행·부분실패 복구 안전.
 - **부분 실패**: 디스크 기록 실패 또는 네트워크 실패 시 consume **안 함** → 다음 실행이 dedup로 안전하게 복구. consume 실패해도 다음 실행이 재시도(중복 안착은 dedup가 막음).
 - **운용(마찰 0)**: 기본은 **Windows 작업 스케줄러**(로그온/주기 실행)로 등록 → 캡처가 Obsidian에 *저절로 나타남*. `npm run sync` 수동 실행은 폴백. (스케줄러 등록 절차는 구현 계획에서 문서화.)
 - **안착 위치**: vault 인박스 하위 짤 전용 폴더(설정값). 이 폴더는 Hachimon `cards.json` 빌드와 무관(플래시카드 아님) — 충돌 없음.
@@ -167,7 +168,7 @@ status: raw          # 후속 변환 서비스가 처리할 표식
 
 | 지점 | 실패 | 처리 |
 |---|---|---|
-| PWA 캡처 | 오프라인/업로드 실패 | IndexedDB 큐 잔류, `uploadState=failed`, 재시도 버튼/자동 재시도. 데이터 유실 없음 |
+| PWA 캡처 | 오프라인/업로드 실패 | IndexedDB 큐 잔류, `uploadState=failed`. 재시도 정책(v1·단순): 수동 "전송" 버튼 재시도 + 다음 앱 실행 시 자동 1회 재시도, 최대 시도 `attempts` 누적, 지수 백오프 없음. 데이터 유실 없음 |
 | PWA 이미지 | 과대 용량 | 업로드 전 Canvas 리사이즈(가로 상한)+WebP. 그래도 초과면 사용자 경고 |
 | 릴레이 업로드 | R2 put 실패 | row `pending` 잔류 → cron 정리. 클라이언트는 재시도(같은 id로 멱등) |
 | 릴레이 인증 | 토큰 불일치 | 401, PWA·CLI 모두 명확한 에러 표시 |
