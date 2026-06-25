@@ -25,3 +25,6 @@ dist-ssr
 
 # Claude Code
 .claude
+
+# Design reference bundles (standalone HTML mockups, kept locally only)
+*(standalone).html
