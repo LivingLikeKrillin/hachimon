@@ -127,7 +127,11 @@ export type StagingItem = CaptureStagingItem | ReflectionStagingItem;
 
 - [ ] **Step 2: `scan`이 `kind:'capture'` 스탬프 (`src/main/staging-store.ts`)**
 
-`scan`의 두 `items.push({...})`(정상 + catch)에 `kind: 'capture'`를 추가한다(정상 push의 객체 첫 필드로 `kind: 'capture',`, catch push에도 동일). 나머지 함수(`writeImage`/`writeRaw`/`writeTransformed`/`hasNote`/`updateNote`/`moveToVault`/`removeItem`)는 `CaptureMeta`/`StagingItem` 인자를 그대로 받되, `moveToVault`/`removeItem`은 `item.imagePath`를 읽으므로 **capture 항목 전제**로 둔다(reflection 분기는 Task 7·9에서). 시그니처 변경 없음.
+`scan`의 두 `items.push({...})`(정상 + catch)에 `kind: 'capture'`를 추가한다(정상 push의 객체 첫 필드로 `kind: 'capture',`, catch push에도 동일).
+
+**중요(typecheck green 필수):** 유니온 전환 후 `moveToVault`(현재 `item.imagePath` 읽는 라인 ~126)·`removeItem`(라인 ~145 `if (item.imagePath)`)은 `StagingItem` 유니온 인자에서 `imagePath`를 직접 못 읽는다(capture arm 전용). 두 함수 본문의 `item.imagePath` 접근을 **`item.kind === 'capture' && item.imagePath`로 가드**한다(reflection 분기는 Task 7·9에서 별도 `moveNoteOnly`/가드로 처리). 시그니처는 `StagingItem`로 유지. 나머지 함수(`writeImage`/`writeRaw`/`writeTransformed`/`hasNote`/`updateNote`)는 `CaptureMeta`/`item.notePath`만 쓰므로 불변.
+
+> anchor tsconfig가 `src/**`(테스트 포함)를 strict로 typecheck하므로 **소스뿐 아니라 테스트 파일의 유니온 미narrow도 게이트 실패**다. Step 4에서 테스트 파일도 함께 narrow한다.
 
 - [ ] **Step 3: ipc narrowing (`src/main/ipc.ts`)**
 
@@ -143,11 +147,12 @@ const targets = scan(s.stagingDir).filter((it) => it.kind === 'capture' && it.st
 - `App.tsx`: 디테일 렌더를 분기 — `selected && selected.kind === 'capture' ? <ItemEditor item={selected} .../> : selected ? <div className="...">감상 에디터 준비 중</div> : <빈 상태/>`. (ReflectionEditor는 Task 12에서 연결.)
 - `TriageList.tsx`: `<TypeBadge type={item.meta.type} />`를 `{item.kind === 'capture' ? <TypeBadge type={item.meta.type} /> : null}`로 가드. `rowTitle`은 `item.meta.note`·`item.transform?.title`만 쓰므로(양 kind 공통 필드) 그대로. `item.meta.source`도 공통이라 그대로.
 - `api.d.ts`: `list: () => Promise<StagingItem[]>` 그대로(유니온 자동 반영). `SaveFields`는 capture용 그대로 유지(reflection은 Task 10에서 별도).
+- **`staging-store.test.ts` narrow(게이트 필수):** 기존 capture 테스트가 `scan(dir)` 결과(이제 유니온)에서 capture 전용 필드를 읽는 라인 — `existsSync(items[0].imagePath)`·`existsSync(item.imagePath)`(이미지 존재 확인 케이스) — 을 `const cap = items[0] as CaptureStagingItem` 또는 `item.kind === 'capture'` 가드로 narrow한다. (`CaptureStagingItem`은 `@/shared/types`에서 import.) 런타임 단언은 불변.
 
 - [ ] **Step 5: 게이트 — 회귀 0 확인**
 
 Run: `npm run test && npm run typecheck && npm run lint`
-Expected: 기존 29 테스트 PASS, typecheck/lint 에러 0. (런타임 불변, 타입만 유니온.)
+Expected: 기존 29 테스트 PASS, typecheck/lint 에러 0. (런타임 불변, 타입만 유니온.) **typecheck 실패가 나면 거의 항상 어떤 소비처(소스/테스트)의 유니온 미narrow** — `item.kind === 'capture'` 가드 또는 `as CaptureStagingItem`로 좁힌다.
 
 - [ ] **Step 6: Commit**
 
@@ -356,9 +361,9 @@ export function parseReflectionNote(md: string): ParsedReflection {
 }
 ```
 
-- [ ] **Step 3b: frontmatter 파서 추출(중복 제거, 선택적 리팩터)**
+- [ ] **Step 3b: frontmatter 파서 추출(DRY — 위 Step 3 코드와 정합)**
 
-기존 `parseNote` 내부의 frontmatter 블록 추출 로직을 작은 헬퍼 `function parseFrontmatter(md): { map: Record<string,string>; body: string }`로 빼고 `parseNote`·`parseReflectionNote` 둘 다 사용. `parseNote` 동작은 불변(기존 테스트가 회귀 가드). 추출이 부담되면 `parseReflectionNote`에 동일 로직을 인라인해도 무방(중복 허용, DRY는 후속).
+위 `parseReflectionNote` 코드가 `parseFrontmatter(md)`를 호출하므로 **추출을 한다**(인라인 변형 금지 — 코드블록을 그대로 복붙 가능하게). 기존 `parseNote` 내부의 frontmatter 블록 추출 로직(라인 ~124-142)을 헬퍼 `function parseFrontmatter(md: string): { map: Record<string,string>; body: string }`로 빼고 `parseNote`·`parseReflectionNote` 둘 다 사용. `parseNote` 동작은 불변(기존 라운드트립 테스트가 회귀 가드).
 
 - [ ] **Step 4: 통과 확인** — Run: `npx vitest run src/core/note.test.ts` → PASS(신규 + 기존 전부).
 - [ ] **Step 5: Commit** — `git commit -am "feat(core): reflection 노트 조립·파싱 + 이름 파생(순수)"`
@@ -720,7 +725,7 @@ export function moveNoteOnly(item: StagingItem, target: { notePath: string }, no
 
 **Files:** Modify `src/main/settings.ts`, `src/renderer/api.d.ts`
 
-- [ ] **Step 1: 구현** — `Settings` 인터페이스와 `DEFAULT_SETTINGS`에 `reflectionSubdir: string` 추가(기본 `'감상'`). renderer `api.d.ts`의 `AppSettings`에도 동일 필드 추가(미러 유지).
+- [ ] **Step 1: 구현** — `Settings` 인터페이스와 `DEFAULT_SETTINGS`에 `reflectionSubdir: string` 추가(기본 `'감상'`, 기존 7필드 유지). `readSettings`는 `{ ...DEFAULT_SETTINGS, ...raw }` 병합이라 **기존 settings.json(필드 없음)도 안전**(기본값 보강). renderer `api.d.ts`의 `AppSettings`에도 동일 필드 추가(미러 유지).
 - [ ] **Step 2: 타입체크** — Run: `npm run typecheck` → 에러 없음.
 - [ ] **Step 3: Commit** — `git commit -am "feat(main): reflectionSubdir 설정(기본 감상)"`
 
@@ -742,6 +747,9 @@ import type { ReflectionMedium, ReflectionMeta } from '@/shared/types';
 
 interface CreateReflectionInput { medium: ReflectionMedium; workTitle: string; progress: string; note: string; source: string; tags: string[]; }
 
+/** 로컬 발급 타임스탬프. v1은 UTC ISO로 충분(파서는 앞 10자만 날짜로 사용). KST 오프셋은 후속. */
+function nowIso(): string { return new Date().toISOString(); }
+
 ipcMain.handle('reflection:create', (_e, input: CreateReflectionInput): { ok: boolean; reason?: string } => {
   const s = readSettings();
   if (!s.stagingDir) return { ok: false, reason: 'staging 폴더 미설정' };
@@ -758,7 +766,7 @@ ipcMain.handle('reflection:create', (_e, input: CreateReflectionInput): { ok: bo
   return { ok: true };
 });
 ```
-`nowIso()` 헬퍼: `new Date().toISOString()` 기반(또는 KST 오프셋 부여). v1은 `new Date().toISOString()`로 충분(파서가 앞 10자만 날짜로 사용). `auto()`가 곧 변환하므로 create 후 renderer가 `transform`+`reload` 호출(또는 create가 직접 `void auto(getWindow())`).
+create 직후 변환은 renderer가 `transform`+`reload`를 호출해 일으킨다(Task 11 `onCreated`→`refresh`). (대안: create 끝에 `triggerAuto(getWindow())` — v1은 renderer 경로 채택, 단순.)
 
 > 구현 노트: create 직후 자동 변환을 위해 `reflection:create` 끝에 `triggerAuto(getWindow())`를 호출하거나, renderer가 create 후 `window.api.transform()`+`reload()`를 부른다(Task 11에서 후자 채택 — 단순).
 
@@ -824,6 +832,8 @@ if (item.kind === 'reflection') {
 
 - [ ] **Step 5: item:save 분기**
 
+먼저 **핸들러 파라미터 타입을 넓힌다.** 현재 시그니처는 `(_e, base: string, fields: Partial<CaptureMeta & TransformResult>)` — 여기에 reflection 필드를 `as`로 단언하면 cross-type 단언이라 TS가 거부한다. `fields` 타입을 `fields: Record<string, unknown>`로 바꾸고, capture 분기는 기존처럼 `const cf = fields as Partial<CaptureMeta & TransformResult>`로, reflection 분기는 `const f = fields as Partial<ReflectionMeta & ReflectionTransform>`로 각각 좁힌다(둘 다 `unknown` 경유라 안전). 기존 capture 분기 코드의 `fields.title` 등 접근을 `cf.title`로 치환.
+
 reflection 편집 저장:
 ```ts
 if (item.kind === 'reflection') {
@@ -884,7 +894,7 @@ export type ReflectionSaveFields = Partial<{ title: string; reflection: string; 
 **Files:** Create `src/renderer/components/MediumBadge.tsx`, `src/renderer/components/ReflectionForm.tsx`; Modify `src/renderer/App.tsx`
 
 - [ ] **Step 1: MediumBadge** — `TypeBadge` 패턴 미러. `book/movie/anime/manga` → 라벨(책/영화/애니/만화) + 색( `--tier-foundation/mechanism/diagnosis` + ok 등 재사용).
-- [ ] **Step 2: ReflectionForm** — 시트/모달. 필드: 매체 칩(REFLECTION_MEDIA), **작품 입력 + 최근작품 픽커**(`window.api.listWorks()`로 자동완성 — 기존 선택 시 workTitle 채움), 진행(선택), 세션 메모(textarea, 필수), source·tags(선택). "추가" → `window.api.createReflection({...})` → 성공 시 `onCreated()`(App이 `refresh()`로 변환+재로드). 검증: workTitle·note 필수.
+- [ ] **Step 2: ReflectionForm** — 시트/모달. 필드: 매체 칩(REFLECTION_MEDIA), **작품 입력 + 최근작품 픽커**(마운트 시 `useEffect`로 `window.api.listWorks()` 1회 로드 → 자동완성 목록; 기존 항목 선택 시 workTitle 채움), 진행(선택), 세션 메모(textarea, 필수), source·tags(선택). "추가" → `window.api.createReflection({...})` → 성공 시 `onCreated()`(App이 `refresh()`로 변환+재로드). 검증: workTitle·note 필수.
 - [ ] **Step 3: App 통합** — 헤더에 "+ 새 감상" 버튼 → `setReflectionFormOpen(true)`. `<ReflectionForm onClose=... onCreated={() => { void refresh(); }} />`. (`refresh`는 pull+transform+list — reflection 변환도 transform이 처리.)
 - [ ] **Step 4: 수동 확인** — `npm run dev`: 새 감상 추가 → 트리아지에 raw→transformed 등장(키 설정 시).
 - [ ] **Step 5: Commit** — `git commit -am "feat(renderer): 매체 뱃지 + 새 감상 폼(최근작품 픽커)"`
@@ -895,7 +905,7 @@ export type ReflectionSaveFields = Partial<{ title: string; reflection: string; 
 
 - [ ] **Step 1: TriageList 분기** — reflection 행: 썸네일 숨김(또는 매체 아이콘), `MediumBadge` + 작품명 표시. `item.kind === 'capture' ? <Thumbnail/> + <TypeBadge/> : <매체아이콘> + <MediumBadge/>`. rowTitle/상태/source 공통.
 - [ ] **Step 2: ReflectionEditor** — `ItemEditor` 구조 미러, prop `item: ReflectionStagingItem`. 좌: 텍스트(작품·진행·메모) / 우: 필드(제목·감상·핵심·태그·진행·source). 버튼: "변환 다시"(`transform`)·"승격"(`promote`)·"버리기"(`discard`) — 기존 IPC 공유. 저장은 `window.api.save(base, {title, reflection, takeaway, tags, source, progress})`.
-- [ ] **Step 3: App 분기** — `selected.kind === 'capture' ? <ItemEditor/> : <ReflectionEditor item={selected}/>`(Task 1의 "준비 중" 자리 교체).
+- [ ] **Step 3: App 분기** — `selected.kind === 'capture' ? <ItemEditor item={selected} .../> : <ReflectionEditor item={selected} .../>`(Task 1의 "준비 중" 자리 교체). **양 분기에 기존 props 보존**: `key={selected.base}`, `onChanged={reload}`, `onRemoved={() => { setSelectedBase(null); void reload(); }}` — ReflectionEditor도 "변환 다시/승격/버리기"가 재로드·선택해제를 일으키도록 동일 배선.
 - [ ] **Step 4: 수동 확인** — `npm run dev`: reflection 선택→편집→저장·승격, 같은 작품 2세션→vault 허브에 링크 2개.
 - [ ] **Step 5: Commit** — `git commit -am "feat(renderer): 트리아지/에디터 reflection 분기 + ReflectionEditor"`
 
